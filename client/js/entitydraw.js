@@ -18,8 +18,8 @@ function drawLabel(ent, ctx, label) {
 
 const EntityDraw = {
     "actor": function (ent, ctx) {
+        //Draw arrow
         ctx.fillStyle = ent.data.color2;
-
         const length = ACTOR_ARROW_LENGTH * ent.screenSize;
         ctx.beginPath();
         ctx.moveTo(
@@ -37,11 +37,13 @@ const EntityDraw = {
         ctx.closePath();
         ctx.fill();
 
+        //Draw circle
         ctx.fillStyle = ent.data.color;
         ctx.beginPath();
         ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
         ctx.fill();
 
+        //Draw more circle if selected
         if (ent.selected) {
             ctx.lineWidth = 2.5;
             ctx.strokeStyle = SELECT_COLOR;

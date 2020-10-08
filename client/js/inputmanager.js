@@ -24,6 +24,7 @@ export default class InputManager {
      * Finds any entities under the mouse pointer.
      * Entities get a circle of Entity.size around themselves.
      * @param ev the mouse event.
+     * @returns {Object[]} an array of entities under the mouse.
      */
     focusEntity(ev) {
         let eList = [];
@@ -41,7 +42,7 @@ export default class InputManager {
      * @param ents the entities to be changed
      * @param select true or omitted if selecting; false if deselecting
      */
-    static selectEntities(ents, select = true) {
+    selectEntities(ents, select = true) {
         for(const s of ents) {
             s.selected = select;
         }
