@@ -5,7 +5,11 @@ Note that most browsers don't like it when sites ask for certain files from your
 
 ## The files
 [main.js](js/main.js) just starts up a little test.
-[diagram.js](js/main.js) is where the good stuff is - it keeps track of entities, manages the canvas, controls size and position of the viewport, etc.
+
+[diagram.js](js/diagram.js) is where the good stuff is - it keeps track of entities, manages the canvas, controls size and position of the viewport, etc.
+
 [entity.js](js/entity.js) has the classes for movable things.
+
 [entitydraw.js](js/entitydraw.js) has code for drawing entities of different types. There's a good reason to do it this way, I think.
+
 [inputmanager.js](js/inputmanager.js) attaches to Diagram and takes in mouse events so you can move things around with the mouse and scroll wheel/two finger touch.
