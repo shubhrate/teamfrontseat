@@ -33,6 +33,7 @@ export default class Animator {
         if(duration + delay <= 0) return false;
         const startTime = now + delay;
 
+        //Where the magic happens: here's the actual object representation of animations
         this.inProgress.push({entity, ...startState, startTime, duration, x, y, angle, func});
 
         if(!this.animating) {
@@ -60,13 +61,11 @@ export default class Animator {
             }
         }
 
-        if(this.inProgress.length === 0) {
-            this.animating = false;
-        }
-
         this.diagram.draw();
 
-        if(this.animating) {
+        if(this.inProgress.length === 0) {
+            this.animating = false;
+        } else if(this.animating) {
             window.requestAnimationFrame(() => this.animate);
         }
     }

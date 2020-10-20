@@ -83,6 +83,10 @@ export default class Diagram {
         }
     }
 
+    /**
+     * Gets an entity... by its ID.
+     * @param id the id of the entity to get
+     */
     getEntityById(id) {
         for(const e of this.entities) {
             if(e.data.id = id) return e;
