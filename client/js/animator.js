@@ -56,7 +56,7 @@ export default class Animator {
         const now = Date.now();
         for(const a of this.inProgress) {
             const prog = Animator.stepAnimation(a, now);
-            if(prog >= 1) {
+            if(prog >= 1) { //Stop tracking this animation if it's done
                 this.inProgress.splice(this.inProgress.indexOf(anim), 1);
             }
         }
