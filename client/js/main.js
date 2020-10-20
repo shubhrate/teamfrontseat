@@ -4,8 +4,8 @@ import InputManager from "./inputmanager.js";
 //Pretend like this came from a database request.
 const testData = [
     {
-        class: "prop",
-        drawType: "prop_chair",
+        class: "furniture",
+        drawType: "furn_chair",
         name: "chair",
         color: "gray",
         color2: "darkgray", //https://i.redd.it/kngwbr8svar31.jpg
@@ -15,8 +15,8 @@ const testData = [
         angle: Math.PI * 0.25
     },
     {
-        class: "prop",
-        drawType: "prop_chair",
+        class: "furniture",
+        drawType: "furn_chair",
         name: "chair",
         color: "gray",
         color2: "darkgray",

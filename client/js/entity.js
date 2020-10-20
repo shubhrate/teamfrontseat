@@ -56,11 +56,13 @@ class Entity {
     }
 }
 
-//The following classes will define behavior only relevant to that class.
+//The following classes may define behavior only relevant to a type of entity.
 
 class Actor extends Entity {}
 
 class Prop extends Entity {}
+
+class Furniture extends Entity {}
 
 class Scenery extends Entity {}
 
@@ -69,8 +71,9 @@ class Scenery extends Entity {}
 const entityClassMap = {
     "actor": Actor,
     "prop": Prop,
+    "furniture": Furniture,
     "scenery": Scenery
 };
 
-export {Actor, Prop, Scenery};
+export {Actor, Prop, Furniture, Scenery};
 export default entityClassMap;

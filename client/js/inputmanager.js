@@ -9,9 +9,6 @@ export default class InputManager {
     constructor(diagram) {
         this.diagram = diagram;
         this.scrollSpeed = 0.05;
-        this.drag = false;
-        this.dragX = 0;
-        this.dragY = 0;
         this.selectedEntities = [];
 
         //Arrow functions mean "this" is this object, not the event.

@@ -1,6 +1,9 @@
 import entityClassMap from "./entity.js";
 import EntityDraw from "./entitydraw.js";
 
+//Manages entities and the canvas they're drawn on.
+//Does conversions from stage to screen space.
+
 export default class Diagram {
     /**
      * Creates a new Diagram and gives it a canvas to draw on.
@@ -78,6 +81,13 @@ export default class Diagram {
             this.updateEntityPosition(e);
             this.entities.push(e);
         }
+    }
+
+    getEntityById(id) {
+        for(const e of this.entities) {
+            if(e.data.id = id) return e;
+        }
+        return false;
     }
     
     /**

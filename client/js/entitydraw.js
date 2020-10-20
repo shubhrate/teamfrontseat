@@ -17,7 +17,7 @@ function drawLabel(ent, ctx, label) {
 }
 
 const EntityDraw = {
-    "actor": function (ent, ctx) {
+    "actor": function(ent, ctx) {
         //Draw arrow
         ctx.fillStyle = ent.data.color2;
         const length = ACTOR_ARROW_LENGTH * ent.screenSize;
@@ -56,7 +56,7 @@ const EntityDraw = {
     },
 
 
-    "prop_chair": function (ent, ctx) {
+    "furn_chair": function(ent, ctx) {
         ctx.fillStyle = ent.data.color;
         ctx.strokeStyle = ent.selected ? SELECT_COLOR : ent.data.color2;
         ctx.lineWidth = 2;
