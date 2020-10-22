@@ -10,7 +10,7 @@ Note that most browsers don't like it when sites ask for certain files from your
 
 [entity.js](js/entity.js) has the classes for movable things.
 
-[entitydraw.js](js/entitydraw.js) stores draw functions for different types of entities, so that you don't have to 
+[entitydraw.js](js/entitydraw.js) stores draw functions for different types of entities. This is so that you don't have to write extending classes for every entity that behaves the same but looks different.
 
 ## Diagram controllers
 
