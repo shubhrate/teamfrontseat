@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 
 <html>
-    <head>
-        <title>Blocking</title>
-    </head>
-    <body style="margin: 0; overflow: hidden;">
-        <canvas id="diagram" tabindex="0"></canvas>
-    </body>
-    <script type="module">
+	<head>
+		<title>Blocking</title>
+	</head>
+	<body style="margin: 0; overflow: hidden;">
+		<canvas id="diagram" tabindex="0"></canvas>
+	</body>
+	<script type="module">
 
 import Diagram from "./js/diagram.js";
 import InputManager from "./js/inputmanager.js";
@@ -15,52 +15,52 @@ import Animator from "./js/animator.js";
 
 //Pretend like this came from a database request.
 const testData = [
-    {
-        class: "furniture",
-        drawType: "furn_chair",
-        name: "chair",
-        color: "gray",
-        color2: "darkgray", //https://i.redd.it/kngwbr8svar31.jpg
-        posX: -4,
-        posY: -2.5,
-        size: 1.4,
-        angle: Math.PI * 0.25
-    },
-    {
-        class: "furniture",
-        drawType: "furn_chair",
-        name: "chair",
-        color: "gray",
-        color2: "darkgray",
-        posX: 4,
-        posY: -2.5,
-        size: 1.4,
-        angle: Math.PI * 0.75
-    },
-    {
-        class: "actor",
-        drawType: "actor",
-        name: "Jane Doe",
-        initials: "JD",
-        color: "green",
-        color2: "darkgreen",
-        posX: 3,
-        posY: 0,
-        size: 0.75,
-        angle: Math.PI
-    },
-    {
-        class: "actor",
-        drawType: "actor",
-        name: "John Smith",
-        initials: "JS",
-        color: "blue",
-        color2: "darkblue",
-        posX: -3,
-        posY: 0,
-        size: 0.75,
-        angle: 0
-    }
+	{
+		class: "furniture",
+		drawType: "furn_chair",
+		name: "chair",
+		color: "gray",
+		color2: "darkgray", //https://i.redd.it/kngwbr8svar31.jpg
+		posX: -4,
+		posY: -2.5,
+		size: 1.4,
+		angle: Math.PI * 0.25
+	},
+	{
+		class: "furniture",
+		drawType: "furn_chair",
+		name: "chair",
+		color: "gray",
+		color2: "darkgray",
+		posX: 4,
+		posY: -2.5,
+		size: 1.4,
+		angle: Math.PI * 0.75
+	},
+	{
+		class: "actor",
+		drawType: "actor",
+		name: "Jane Doe",
+		initials: "JD",
+		color: "green",
+		color2: "darkgreen",
+		posX: 3,
+		posY: 0,
+		size: 0.75,
+		angle: Math.PI
+	},
+	{
+		class: "actor",
+		drawType: "actor",
+		name: "John Smith",
+		initials: "JS",
+		color: "blue",
+		color2: "darkblue",
+		posX: -3,
+		posY: 0,
+		size: 0.75,
+		angle: 0
+	}
 ];
 
 //Bare JSON is easy to feed into Diagram

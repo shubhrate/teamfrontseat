@@ -10,77 +10,77 @@ const LABEL_FONT_SCALE = 0.4;
 const LABEL_DIST_SCALE = 1;
 
 function drawLabel(ent, ctx, label) {
-    ctx.fillStyle = "black";
-    ctx.font = `${ent.screenSize * LABEL_FONT_SCALE}px sans-serif`;
-    const dist = ent.screenSize / 2 * LABEL_DIST_SCALE;
-    ctx.fillText(label, ent.screenX + dist, ent.screenY - dist);
+	ctx.fillStyle = "black";
+	ctx.font = `${ent.screenSize * LABEL_FONT_SCALE}px sans-serif`;
+	const dist = ent.screenSize / 2 * LABEL_DIST_SCALE;
+	ctx.fillText(label, ent.screenX + dist, ent.screenY - dist);
 }
 
 const EntityDraw = {
-    "actor": function(ent, ctx) {
-        //Draw arrow
-        ctx.fillStyle = ent.data.color2;
-        const length = ACTOR_ARROW_LENGTH * ent.screenSize;
-        ctx.beginPath();
-        ctx.moveTo(
-            length * Math.cos(ent.angle) + ent.screenX,
-            length * Math.sin(ent.angle) + ent.screenY
-        );
-        ctx.lineTo(
-            ent.screenSize / 2 * Math.cos(ent.angle + ACTOR_ARROW_ARC) + ent.screenX,
-            ent.screenSize / 2 * Math.sin(ent.angle + ACTOR_ARROW_ARC) + ent.screenY
-        );
-        ctx.lineTo(
-            ent.screenSize / 2 * Math.cos(ent.angle - ACTOR_ARROW_ARC) + ent.screenX,
-            ent.screenSize / 2 * Math.sin(ent.angle - ACTOR_ARROW_ARC) + ent.screenY
-        );
-        ctx.closePath();
-        ctx.fill();
+	"actor": function(ent, ctx) {
+		//Draw arrow
+		ctx.fillStyle = ent.data.color2;
+		const length = ACTOR_ARROW_LENGTH * ent.screenSize;
+		ctx.beginPath();
+		ctx.moveTo(
+			length * Math.cos(ent.angle) + ent.screenX,
+			length * Math.sin(ent.angle) + ent.screenY
+		);
+		ctx.lineTo(
+			ent.screenSize / 2 * Math.cos(ent.angle + ACTOR_ARROW_ARC) + ent.screenX,
+			ent.screenSize / 2 * Math.sin(ent.angle + ACTOR_ARROW_ARC) + ent.screenY
+		);
+		ctx.lineTo(
+			ent.screenSize / 2 * Math.cos(ent.angle - ACTOR_ARROW_ARC) + ent.screenX,
+			ent.screenSize / 2 * Math.sin(ent.angle - ACTOR_ARROW_ARC) + ent.screenY
+		);
+		ctx.closePath();
+		ctx.fill();
 
-        //Draw circle
-        ctx.fillStyle = ent.data.color;
-        ctx.beginPath();
-        ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
-        ctx.fill();
+		//Draw circle
+		ctx.fillStyle = ent.data.color;
+		ctx.beginPath();
+		ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
+		ctx.fill();
 
-        //Draw more circle if selected
-        if (ent.selected) {
-            ctx.lineWidth = 2.5;
-            ctx.strokeStyle = SELECT_COLOR;
-            ctx.beginPath();
-            ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
-            ctx.stroke();
-        }
+		//Draw more circle if selected
+		if (ent.selected) {
+			ctx.lineWidth = 2.5;
+			ctx.strokeStyle = SELECT_COLOR;
+			ctx.beginPath();
+			ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
 
-        drawLabel(ent, ctx, ent.data.name);
-    },
+		drawLabel(ent, ctx, ent.data.name);
+	},
 
 
-    "furn_chair": function(ent, ctx) {
-        ctx.fillStyle = ent.data.color;
-        ctx.strokeStyle = ent.selected ? SELECT_COLOR : ent.data.color2;
-        ctx.lineWidth = 2;
-        const width = ent.screenSize / Math.sqrt(2); //Shape is within bounding circle
+	"furn_chair": function(ent, ctx) {
+		ctx.fillStyle = ent.data.color;
+		ctx.strokeStyle = ent.selected ? SELECT_COLOR : ent.data.color2;
+		ctx.lineWidth = 2;
+		const width = ent.screenSize / Math.sqrt(2); //Shape is within bounding circle
 
-        //We do rotations to this one
-        ctx.translate(ent.screenX, ent.screenY);
-        ctx.rotate(ent.angle);
-        ctx.translate(-ent.screenX, -ent.screenY);
+		//We do rotations to this one
+		ctx.translate(ent.screenX, ent.screenY);
+		ctx.rotate(ent.angle);
+		ctx.translate(-ent.screenX, -ent.screenY);
 
-        const corner = [ent.screenX - width / 2, ent.screenY - width / 2];
-        const fullRect = [...corner, width, width];
-        const backRect = [...corner, width * 0.1, width];
+		const corner = [ent.screenX - width / 2, ent.screenY - width / 2];
+		const fullRect = [...corner, width, width];
+		const backRect = [...corner, width * 0.1, width];
 
-        ctx.fillRect(...fullRect);
-        ctx.strokeRect(...fullRect);
-        ctx.strokeRect(...backRect);
+		ctx.fillRect(...fullRect);
+		ctx.strokeRect(...fullRect);
+		ctx.strokeRect(...backRect);
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-        drawLabel(ent, ctx, ent.data.name);
-    }
+		drawLabel(ent, ctx, ent.data.name);
+	}
 
-    //etc etc...
+	//etc etc...
 };
 
 export default EntityDraw;
