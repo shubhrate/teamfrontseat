@@ -21,6 +21,8 @@ class Entity {
 		this.data = data;
 
 		this.selected = false;
+		this.hasController = false;
+
 		this.moved = false; //Flag for Diagram to update screen position
 
 		//Screen space coordinates. For drawing on screen. Managed by Diagram.

@@ -46,6 +46,7 @@ export default class Diagram {
 		this.manageResize();
 	}
 
+	//TODO: this function.
 	manageResize() {
 		
 	}
@@ -83,13 +84,16 @@ export default class Diagram {
 		}
 	}
 
+	//TODO: this method assumes that one day entities will be assigned
+	//unique IDs, probably UUIDs. Because JavaScript has no integrated UUID
+	//generator, I put this off. Finish this.
 	/**
 	 * Gets an entity... by its ID.
 	 * @param id the id of the entity to get
 	 */
 	getEntityById(id) {
 		for(const e of this.entities) {
-			if(e.data.id = id) return e;
+			if(e.data.id === id) return e;
 		}
 		return false;
 	}

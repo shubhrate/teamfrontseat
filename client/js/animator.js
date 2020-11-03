@@ -11,11 +11,15 @@ export default class Animator {
 	///////////////////////////////////
 	//FUNCTIONS FOR CREATING ANIMATIONS OF DIFFERENT TYPES
 
+	//TODO: this whole category of functions should be reconsidered, in
+	//particular whether parameters ought to be spread out like this or
+	//should it just be handed one field with the necessary data in JSON
+
 	addAnimation(type, entity, duration, delay, func, data) {
-		const now = Date.now();
-		const startTime = now + delay;
+		const startTime = Date.now() + delay;
 
 		//NOTE: here's the spec of a generic animation object
+		//data stores the actual motion, in a different form for every type
 		const animationObject = {
 			type,
 			entity,
@@ -41,7 +45,7 @@ export default class Animator {
 	 * @param func the timing function. Default linear.
 	 * @returns the animation object
 	 */
-	addCross(entity, duration, x, y, angle, delay = 0, func = (x) => x) {
+	animateCross(entity, duration, x, y, angle, delay = 0, func = (x) => x) {
 		angle = angle || entity.angle;
 		const data = {
 			startX: entity.posX,
@@ -53,7 +57,7 @@ export default class Animator {
 		return this.addAnimation("cross", entity, duration, delay, func, data);
 	}
 
-	addPath(entity, duration, xCoords, yCoords, delay = 0, func = (x) => x) {
+	animatePath(entity, duration, xCoords, yCoords, delay = 0, func = (x) => x) {
 		if(xCoords.length !== yCoords.length) return;
 		xCoords.unshift(entity.posX);
 		yCoords.unshift(entity.posY);
@@ -81,7 +85,7 @@ export default class Animator {
 		return this.addAnimation("path", entity, duration, delay, func, data);
 	}
 
-	addMotion() {
+	animateMotion() {
 
 	}
 
@@ -122,11 +126,11 @@ export default class Animator {
 	startAnimating() {
 		if (!this.animating && this.inProgress.length > 0) {
 			this.animating = true;
-			this.animate();
+			this.animatorCallback();
 		}
 	}
 
-	animate() {
+	animatorCallback() {
 		const now = Date.now();
 		for(const a of this.inProgress) {
 			if (a.startTime <= now) {
@@ -141,10 +145,9 @@ export default class Animator {
 		this.diagram.draw();
 
 		if(this.inProgress.length === 0) {
-			console.log("animation callback stopped");
 			this.animating = false;
 		} else if(this.animating) {
-			window.requestAnimationFrame(() => this.animate());
+			window.requestAnimationFrame(() => this.animatorCallback());
 		}
 	}
 }

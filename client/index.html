@@ -12,6 +12,7 @@
 import Diagram from "./js/diagram.js";
 import InputManager from "./js/inputmanager.js";
 import Animator from "./js/animator.js";
+import WebClient from "./js/webclient.js";
 
 //Pretend like this came from a database request.
 const testData = [
@@ -70,11 +71,15 @@ diagram.height = window.innerHeight;
 diagram.windowX = diagram.width / diagram.scale / 2;
 diagram.windowY = diagram.height / diagram.scale / 2;
 
-new InputManager(diagram);
+const inputmanager = new InputManager(diagram);
 
 const animator = new Animator(diagram);
-animator.addCross(diagram.entities[3], 2000, 0, -3, Math.PI, 500);
-animator.addPath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1]);
+animator.animateCross(diagram.entities[3], 2000, 0, -3, Math.PI, 500);
+animator.animatePath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1], 0, (x) => Math.pow(x, 3));
+
+new WebClient("ws://localhost:9003", function() {}, function() {}, {
+	diagram, inputmanager, animator
+});
 
 diagram.draw();
 

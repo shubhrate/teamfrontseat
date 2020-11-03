@@ -2,6 +2,7 @@
 //See entity.js to learn why it's this way.
 
 const SELECT_COLOR = "#3498db";
+const CONTROLLED_COLOR = "#e74c3c";
 
 const ACTOR_ARROW_LENGTH = 0.8;
 const ACTOR_ARROW_ARC = 0.55;
@@ -43,10 +44,10 @@ const EntityDraw = {
 		ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
 		ctx.fill();
 
-		//Draw more circle if selected
-		if (ent.selected) {
+		//Draw more circle if selected or controlled
+		if (ent.selected || ent.hasController) {
 			ctx.lineWidth = 2.5;
-			ctx.strokeStyle = SELECT_COLOR;
+			ctx.strokeStyle = ent.hasController ? CONTROL_COLOR : SELECT_COLOR;
 			ctx.beginPath();
 			ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
 			ctx.stroke();
@@ -58,7 +59,10 @@ const EntityDraw = {
 
 	"furn_chair": function(ent, ctx) {
 		ctx.fillStyle = ent.data.color;
-		ctx.strokeStyle = ent.selected ? SELECT_COLOR : ent.data.color2;
+		ctx.strokeStyle = ent.data.color2;
+		if(ent.selected) ctx.strokeStyle = SELECT_COLOR;
+		if(ent.hasController) ctx.strokeStyle = CONTROLLED_COLOR;
+
 		ctx.lineWidth = 2;
 		const width = ent.screenSize / Math.sqrt(2); //Shape is within bounding circle
 

@@ -27,7 +27,7 @@ export default class InputManager {
 		let eList = [];
 		for(const ent of this.diagram.entities) {
 			const dist = Math.sqrt(Math.pow(Math.abs(ent.screenX - ev.offsetX), 2) + Math.pow(Math.abs(ent.screenY - ev.offsetY), 2));
-			if(dist < ent.size * this.diagram.scale / 2) {
+			if(dist < ent.size * this.diagram.scale / 2 && !ent.hasController) {
 				eList.push(ent);
 			}
 		}
@@ -50,13 +50,14 @@ export default class InputManager {
 
 	onWheel(e) {
 		e.preventDefault();
-		let focus = this.selectedEntities.length > 0 ? this.selectedEntities : this.focusEntity(e);
-		let delta = e.deltaY * this.scrollSpeed;
-		if(focus.length > 0) {
+		const focus = this.selectedEntities.length > 0 ? this.selectedEntities : this.focusEntity(e);
+		const delta = e.deltaY * this.scrollSpeed;
+
+		if(focus.length > 0) { //Scroll wheel is rotating entities
 			for(const f of focus) {
 				f.angle = f.angle + (delta * Math.PI * 0.02) % (Math.PI * 2);
 			}
-		} else {
+		} else { //Scroll wheel is zooming the viewport
 			const newScale = Math.max(this.diagram.scale - delta, 1);
 			const dimScale = this.diagram.scale / newScale;
 			this.diagram.scale = newScale;
@@ -68,14 +69,15 @@ export default class InputManager {
 
 	onMouseDown(e) {
 		let focus = this.focusEntity(e);
-		if(focus.length > 0) {
+
+		if(focus.length > 0) { //Click selects an entity
 			InputManager.selectEntities(focus);
 			for(const f of focus) {
 				if(!this.selectedEntities.includes(f)) {
 					this.selectedEntities.push(f);
 				}
 			}
-		} else {
+		} else { //Click deselects all entities
 			InputManager.selectEntities(this.selectedEntities, false);
 			this.selectedEntities = [];
 		}
@@ -83,13 +85,13 @@ export default class InputManager {
 	}
 
 	onMouseMove(e) {
-		if(e.buttons & 1) {
-			if(this.selectedEntities.length > 0) {
+		if(e.buttons & 1) { //Left-click is down
+			if(this.selectedEntities.length > 0) { //Mouse is dragging entities
 				for(const s of this.selectedEntities) {
 					s.posX += e.movementX / this.diagram.scale;
 					s.posY += e.movementY / this.diagram.scale;
 				}
-			} else {
+			} else { //Mouse is dragging the viewport
 				this.diagram.windowX += e.movementX / this.diagram.scale;
 				this.diagram.windowY += e.movementY / this.diagram.scale;
 			}
