@@ -3,19 +3,23 @@
 /* -----THE PROTOCOL-----
 DATA IN should arrive as stringified JSON with the following format:
 {
-	type: foo
+	type: "foo"
+	id: "123456789-abcdef"
 	data: {}
 }
 where:
 	TYPE is a string identifying the kind of data contained
+	ID is the unique ID of the request, for tracking callbacks
 	DATA is a JSON object containing the data
 WebClient determines based on "type" what behavior to enact and on what module
 of the app it should be enacted.
 */
 
+import {uniqueID} from "./util.js";
+
 //HANDLERS FOR DATA OF DIFFERENT TYPES. This is the important bit.
 //New behaviors for how to handle incoming data are added here. This keeps
-//these handlers in one place, rather than spread 
+//these handlers in one place, rather than spread throughout the project files.
 const requestTypes = {
 	/*
 	Get the complete list of entities on the diagram.
@@ -31,8 +35,7 @@ const requestTypes = {
 	},
 	/*
 	Update one or more properties of one entity
-	DATA: the id of the entity and the attributes to be updated, in a flat
-	object.
+	DATA: entity id and the attributes to be updated, in a flat object.
 	*/
 	"entity_update": {
 		modules: ["diagram"],
@@ -54,12 +57,14 @@ export default class WebClient {
 	 */
 	constructor(url, openCallback, errorCallback, appModules = {}) {
 		this.url = url;
-		this.open = false;
+		this.isOpen = false;
 		this.socket = undefined;
 		
 		this.openCallback = undefined;
 		this.errorCallback = undefined;
 		this.closeCallback = undefined;
+
+		this.requestCallbacks = [];
 
 		this.appModules = appModules; //A map to the classes in this project
 		//TODO: this pattern indicates a project in need of a refactor towards
@@ -75,7 +80,7 @@ export default class WebClient {
 	//can immediately hand over all the data we need to get up to speed.
 
 	open(openCallback, errorCallback) {
-		if(!this.open) {
+		if(!this.isOpen) {
 			this.socket = new WebSocket(this.url);
 			if(openCallback) this.openCallback = openCallback;
 			if(errorCallback) this.errorCallback = errorCallback;
@@ -85,20 +90,20 @@ export default class WebClient {
 			this.socket.onmessage = () => this.onWSMessage();
 			this.socket.onerror = () => this.onWSError();
 
-			this.open = true;
+			this.isOpen = true;
 		}
 	}
 
 	close(closeCallback) {
-		if(this.open) {
+		if(this.isOpen) {
 			this.closeCallback = closeCallback;
 			this.socket.close();
-			this.open = false;
+			this.isOpen = false;
 		}
 	}
 
 	send(msg) {
-		if(this.open) {
+		if(this.isOpen) {
 			this.socket.send(JSON.stringify(msg));
 		}
 	}
@@ -110,12 +115,12 @@ export default class WebClient {
 	//SOCKET EVENT HANDLERS
 
 	onWSOpen() {
-		this.open = true;
+		this.isOpen = true;
 		if(this.openCallback) this.openCallback();
 	}
 
 	onWSClose() {
-		this.open = false;
+		this.isOpen = false;
 		if(this.closeCallback) this.closeCallback();
 	}
 

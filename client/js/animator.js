@@ -1,6 +1,8 @@
 //Manages animations on the diagram
 //Runs the draw callback only while animations are in progress
 
+import {pythag} from "./util.js";
+
 export default class Animator {
 	constructor(diagram) {
 		this.diagram = diagram;
@@ -65,9 +67,8 @@ export default class Animator {
 		//Calculate the lengths of all moves
 		let distances = [0];
 		for(let p = 1; p < xCoords.length; p++) {
-			const a = Math.abs(xCoords[p] - xCoords[p - 1]);
-			const b = Math.abs(yCoords[p] - yCoords[p - 1]);
-			distances.push(Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2)));
+			const d = pythag(xCoords[p] - xCoords[p - 1], yCoords[p] - yCoords[p - 1]);
+			distances.push(d);
 		}
 		const pathLength = distances.reduce((total, current) => total + current);
 

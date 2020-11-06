@@ -1,6 +1,8 @@
 //Manages... input.
 //This might only turn out to be useful for prototyping, but still.
 
+import {pythag} from "./util.js";
+
 export default class InputManager {
 	/**
 	 * Create an InputManager, attach it to a Diagram, and add event listeners.
@@ -26,7 +28,7 @@ export default class InputManager {
 	focusEntity(ev) {
 		let eList = [];
 		for(const ent of this.diagram.entities) {
-			const dist = Math.sqrt(Math.pow(Math.abs(ent.screenX - ev.offsetX), 2) + Math.pow(Math.abs(ent.screenY - ev.offsetY), 2));
+			const dist = pythag(ent.screenX - ev.offsetX, ent.screenY - ev.offsetY);
 			if(dist < ent.size * this.diagram.scale / 2 && !ent.hasController) {
 				eList.push(ent);
 			}

@@ -1,5 +1,6 @@
 import entityClassMap from "./entity.js";
 import EntityDraw from "./entitydraw.js";
+import {uniqueID} from "./util.js";
 
 //Manages entities and the canvas they're drawn on.
 //Does conversions from stage to screen space.
@@ -78,7 +79,10 @@ export default class Diagram {
 	 */
 	addUnclassifiedEntity(...objects) {
 		for(const o of objects) {
-			const e = new entityClassMap[o.class](o);
+			if(!o.id) { //If it doesn't have an ID, give it one.
+				o.id = uniqueID();
+			}
+			let e = new entityClassMap[o.class](o);
 			this.updateEntityPosition(e);
 			this.entities.push(e);
 		}
