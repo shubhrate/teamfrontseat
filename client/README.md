@@ -1,8 +1,12 @@
 # Blocking Diagram Client
 
-Here's my start on a front-end system for moving abstract actors and props around on a virtual stage. I tried to write it with extensibility and ease of connecting to a database server in mind.
+Renders a virtual stage; allows actors, props, and other entities to be moved around on it. Integrates several different controllers for entities, including user input, animations or recorded motion playback, and remote control. Syncs to a database server.
 
-Note that most browsers don't like it when sites ask for certain files from your local machine, or ask for them in a certain way, or something. So this has to be running on an HTTP server to work at the moment. For testing on Windows I've been navigating a command line to the folder and running `py -m http.server`. Then point a browser tab at localhost:8000 and you should be able to test it out.
+## Setup
+
+This project uses Webpack now! Run `npm install` to resolve dependencies (currently only Webpack itself), then run `npm run build` to build the code. Once you've done that, open build/index.html to test it out.
+
+Before Webpack, this code ran into browser policy errors: apparently browsers don't like it when you try to make certain requests for external files while running a site locally, even if those files are also on your local machine. Because Webpack now crunches the module dependency tree that used to cause these problems into a single file, this should no longer be an issue. However, there's a chance you'll encounter similar problems again when adding and testing a feature, like client-server interaction. So, if you encounter trouble and the browser console says it has something to do with "CORS," the solution is to host the code on an http server. For testing on Windows I navigated a command line to the folder and ran `py -m http.server`. Then point a browser tab at localhost:8000 and things ought to work again.
 
 ## The files
 

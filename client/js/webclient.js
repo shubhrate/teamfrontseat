@@ -3,8 +3,8 @@
 /* -----THE PROTOCOL-----
 DATA IN should arrive as stringified JSON with the following format:
 {
-	type: "foo"
-	id: "123456789-abcdef"
+	type: "foo",
+	id: "123456789-abcdef",
 	data: {}
 }
 where:
@@ -25,7 +25,7 @@ const requestTypes = {
 	Get the complete list of entities on the diagram.
 	DATA: an array of entity data objects.
 	*/
-	"entities": {
+	"entities_set": {
 		modules: ["diagram"],
 		handler: function(data, app) {
 			app.diagram.entities = [];
@@ -41,8 +41,14 @@ const requestTypes = {
 		modules: ["diagram"],
 		handler: function(data, app) {
 			const entity = app.diagram.getEntityById(data.id);
-			for(const p of ["posX", "posY", "size", "angle"]) {
-				if(data[p]) entity[p] = data[p];
+			delete data.id;
+			//With id out of the way, we drop other properties into the entity
+			for(const p in data) { //Notice: "in," not "of." They're different.
+				if (entity.__lookupSetter__(p)) {
+					entity[p] = data[p];
+				} else {
+					entity.data[p] = data[p];
+				}
 			}
 			app.diagram.draw();
 		}
@@ -144,6 +150,6 @@ export default class WebClient {
 			}
 		}
 
-		requestType.function(msg.data, this.appModules);
+		requestType.handler(msg.data, this.appModules);
 	}
 }

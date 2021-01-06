@@ -1,10 +1,12 @@
 //Manages animations on the diagram
 //Runs the draw callback only while animations are in progress
 
-import {pythag} from "./util.js";
+//TODO: just fucking tear this whole system down and rewrite it, I mean Jesus Christ man
+
+import {pythag, interpolate} from "./util.js";
 
 export default class Animator {
-	constructor(diagram) {
+		constructor(diagram) {
 		this.diagram = diagram;
 		this.inProgress = [];
 		this.animating = false;
@@ -38,7 +40,7 @@ export default class Animator {
 
 	/**
 	 * Animate an entity from its current position in a line to a destination.
-	 * @param id the ID of the animated entity
+	 * @param entity the entity to animate
 	 * @param duration the duration of the animation
 	 * @param x the x coordinate of the destination
 	 * @param y the y coordinate of the destination
@@ -115,12 +117,6 @@ export default class Animator {
 
 	}
 
-	static stepFunctions = {
-		"cross": Animator.stepCross,
-		"path": Animator.stepPath,
-		"motion": Animator.stepMotion
-	}
-
 	///////////////////////////////////
 	//FUNCTIONS ACTUALLY MANAGING ANIMATIONS
 
@@ -132,11 +128,17 @@ export default class Animator {
 	}
 
 	animatorCallback() {
+		const stepFunctions = {
+			"cross": Animator.stepCross,
+			"path": Animator.stepPath,
+			"motion": Animator.stepMotion
+		}
+
 		const now = Date.now();
 		for(const a of this.inProgress) {
 			if (a.startTime <= now) {
 				const progress = a.func(Math.min((now - a.startTime) / a.duration, 1));
-				Animator.stepFunctions[a.type](a, progress);
+				stepFunctions[a.type](a, progress);
 				if(progress >= 1) { //Stop tracking this animation if it's done
 					this.inProgress.splice(this.inProgress.indexOf(a), 1);
 				}
