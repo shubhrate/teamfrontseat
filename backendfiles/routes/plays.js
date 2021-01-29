@@ -69,3 +69,12 @@ router.patch(':playId', async (req, res) => {
 
 //Export router
 module.exports = router;
+
+//not sure if this code would be redundant, but gives us access to io
+/*module.exports = function(io) {
+    var router = express.Router();
+    //define routes
+    //io is available in this scope
+    router.get(...);
+    return router;
+}*/
