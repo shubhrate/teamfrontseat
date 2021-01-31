@@ -57,10 +57,6 @@ const requestTypes = {
 
 //Now here's the actual class.
 export default class WebClient {
-	/**
-	 * Create a WebSocketManager and attach it to a diagram.
-	 * @param diagram The diagram object to manage.
-	 */
 	constructor(url, openCallback, errorCallback, appModules = {}) {
 		this.url = url;
 		this.isOpen = false;
