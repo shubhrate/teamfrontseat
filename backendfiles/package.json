@@ -1,10 +1,14 @@
 {
   "name": "frontseat",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend for front seat, a virtual theatrical blocking diagram",
+  "private": true,
   "scripts": {
     "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ellehcimzhang/teamfrontseat.git"
   },
   "author": "",
   "license": "ISC",
