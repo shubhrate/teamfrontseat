@@ -5,8 +5,7 @@ const bodyParser = require('body-parser');
 var cors = require('cors');
 
 
-//var server = require('http').createServer(app);
-var server = app.listen(3000);
+var server = app.listen(9003);
 //var io = require('socket.io').listen(server);
 var io = require('socket.io')(server);
 app.set("io", io);
@@ -14,9 +13,8 @@ app.set("io", io);
 //var io = app.get("io");
 //do we have access to the app object in routes?
 
-//I think this goes in a main file so that we can initialize the socketio module
-//and pass it the io instance:
-//require('./mysocket.js')(io);
+//initialize the socketio module to pass it the io instance:
+require('./mysocket.js')(io);
 
 //Middlewares
 app.use(cors()); //allows front and backend to be in same domain?
@@ -61,10 +59,10 @@ mongoose.connect(
     //test write and read using defined funcitons -- check mongoose documentation (STEP 1)
 );
 
-//test write and test read funcitons (mongoose.)
+//test write and test read functions (mongoose.)
 
 //Start Listening to Server:
-app.listen(3000);
+app.listen(9003);
 //app.onRecieve - when query recieved -> reply to client requests (STEP 2)
 
 module.exports = (io) => {
