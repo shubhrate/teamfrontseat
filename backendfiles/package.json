@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend for front seat, a virtual theatrical blocking diagram",
   "private": true,
-  "main": "index.js"
+  "main": "index.js",
   "scripts": {
     "start": "nodemon app.js"
   },
