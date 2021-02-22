@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Front Seat</title>
+    <style>
+      canvas {
+        width: 800px;
+        height: 600px;
+        border: 5px solid black;
+      }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+	  <div>
+      <label for="ID_INPUT_LOGIN">Login User Name:</label>
+      <input type="text" id="ID_INPUT_LOGIN" maxlength="12" size="12">
+		  <button type="button" id="ID_LOGIN">Go!</button>
+		</div>
+	  <div>
+      <canvas id="canvas"></canvas>
+		</div>
+		<div>
+      <label for="ID_INPUT_MESSAGE">Client says JSON text:</label>
+      <input type="text" id="ID_INPUT_MESSAGE" maxlength="60" size="60">
+		  <button type="button" id="ID_SEND">Send</button>
+		</div>
+		<div>
+      <label for="ID_SERVER_REPLY">Server says:</label>
+      <p id="ID_SERVER_REPLY"></p>
+		</div>
+	</body>
+  <script src="/static/webclient.js"></script>
+</html>
