@@ -68,7 +68,7 @@ const animator = new Animator(diagram);
 animator.animateCross(diagram.entities[3], 2000, 0, -3, Math.PI, 500);
 animator.animatePath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1], 0, (x) => Math.pow(x, 3));
 
-new WebClient("ws://localhost:9003", function () { }, function () { }, {
+new WebClient("ws://localhost:3000/webclient", function () { }, function () { }, {
     diagram, inputmanager, animator
 });
 
