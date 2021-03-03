@@ -51,12 +51,6 @@ mongoose.connect(
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-const User = require('./models/User');
-var user_instance = new User({ name: "Tester", password: "password" });
-user_instance.save(function (err) {
-    if (err) console.log(err);
-});
-
 //test write and test read functions (mongoose.)
 
 //Start Listening to Server:
