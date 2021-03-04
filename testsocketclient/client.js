@@ -18,7 +18,7 @@ function onSocketOpened(evt) {
 
 function onSocketError(evt)
 {
-  // evt contains error info
+    // evt contains error info
 }
 
 function isOpen(ws) {
