@@ -85,7 +85,7 @@ router.ws('/', (ws, req) => {
         };
         const collection = collectionMap[msg.collection];
         
-        const result;
+        const result = null;
 
         //command string - invokes a function based on command and collection
         if (msg.type=="getOne") {
