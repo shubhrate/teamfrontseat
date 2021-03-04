@@ -70,6 +70,8 @@ function createInstance(collection, data) {
     console.log("instance added");
 }
 
+/* https://www.npmjs.com/package/express-ws */
+
 app.use(function (req, res, next) {
     console.log('middleware');
     req.testing = 'testing';
@@ -145,6 +147,9 @@ app.ws('/', function(ws, req) {
 //Start Listening to Server:
 app.listen(3000);
 
+
+/* not sure how much of this we need anymore since no longer using webclient.js:
+
 //Middlewares
 //app.use(cors()); //allows front and backend to be in same domain?
 //app.use(bodyParser.json());
@@ -158,4 +163,6 @@ app.listen(3000);
 //    res.send('We are on home');
 //});
 
-//app.onRecieve - when query recieved -> reply to client requests (STEP 2)
+//app.onRecieve - when query recieved -> reply to client requests (STEP 2) 
+
+*/
