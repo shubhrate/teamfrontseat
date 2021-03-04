@@ -1,58 +1,161 @@
 const express = require('express');
 const app = express();
+const expressWs = require('express-ws')(app);
+
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const ws = require('express-ws')(app);
 
-
-//Middlewares
-app.use(cors()); //allows front and backend to be in same domain?
-app.use(bodyParser.json());
-
-require('dotenv/config');
-
-//Import Routes:
-/*
-const usersRoute = require('./routes/users');
-const playsRoute = require('./routes/plays');
-const charactersRoute = require('./routes/characters');
-*/
-//SORRY: ONLY ONE ROUTE NOW, FOR ALL WEBSOCKET CONNECTIONS.
-//Best we can hope for in terms of organization is separate routes for
-//connections from web client vs. vive tracker client.
-
-const clientRoute = require('./routes/webclient');
-
-//TODO: Unless there's a way to use these routes (and please tell me if there
-//is, bundling them as I've done feels somewhat inelegant), they should be
-//removed. This goes also for the imports above.
-/*
-app.use('/users', usersRoute);
-app.use('/plays', playsRoute);
-app.use('/characters', charactersRoute);
-*/
-
-app.use('/webclient', clientRoute);
-
-//Routes:
-app.get('/', (req, res) => {
-    res.send('We are on home');
-});
+const Character = require('./models/Character');
+const Diagram = require('./models/Diagram');
+const Play = require('./models/Play');
+const User = require('./models/User');
 
 //Server connects to DB
+require('dotenv/config');
+
 mongoose.connect(
     process.env.DB_CONNECTION,
     { useNewUrlParser: true },
     () => console.log('connected to DB!')
-    //test write and read using defined functions -- check mongoose documentation (STEP 1)
 );
 
-var db = mongoose.connection;
+const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-//test write and test read functions (mongoose.)
+function getOne(collection, query) {
+    //finds a single instance that matches the query
+    //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
+    collection.findOne(query, function (err, result) {
+        if (err) return handleError(err);
+        return result;
+    });
+    console.log("one result found");
+}
+
+function getAll(collection, query) {
+    //finds all instances that match the query
+    collection.find(query, function (err, results) {
+        if (err) return handleError(err);
+        return results;
+    });
+    console.log("all results found");
+}
+
+function update(collection, query) {
+    //update instance with query.id
+    collection.updateOne(query.id, query);
+    query.id.save(function (err, result) {
+        if (err) console.log(err);
+        return result;
+    });
+    console.log("instance updated");
+}
+
+function remove(collection, query) {
+    collection.deleteOne(query);
+    query.id.remove(function (err, result) {
+        if (err) console.log(err);
+        return result;
+    });
+    console.log("instance deleted");
+}
+
+function createInstance(collection, data) {
+    var instance = new collection(data);
+    instance.save(function (err, result) {
+        if (err) console.log(err);
+        return result;
+    });
+    console.log("instance added");
+}
+
+app.use(function (req, res, next) {
+    console.log('middleware');
+    req.testing = 'testing';
+    return next();
+});
+
+app.get('/', function(req, res, next) {
+    console.log('get route', req.testing);
+    res.end();
+});
+
+app.ws('/', function(ws, req) {
+    ws.on('message', function(msgStr) {
+        console.log("Client connected.");
+    
+        //log message from client
+        console.log(msgStr);
+    
+        //returns an object that matching the string
+        const msg = JSON.parse(msgStr)  
+    
+        //after JSON.parse:
+        /*
+            type: "getOne",
+            collection: "users",
+            data: {name: "Jane", password: "password", id: "487434"}
+        */
+        
+        //reference collection into map of models
+        const collectionMap = {
+            'users': User,
+            'characters': Character,
+            'plays': Play,
+            'diagrams': Diagram
+        };
+        const collection = collectionMap[msg.collection];
+        
+        var result = {};
+    
+        //command string - invokes a function based on command and collection
+        if (msg.type=="getOne") {
+            result = getOne(collection, msg.data);
+        }
+        if (msg.type=="getAll") {
+            result = getAll(collection, msg.data);
+        }
+        if (msg.type=="post") {
+            result = createInstance(collection, msg.data);
+        }
+        if (msg.type=="delete") {
+            result = remove(msg.data.id);
+        }
+        if (msg.type=="update") {
+            result = update(msg.data);
+        }
+    
+        //add success flag - this is raising an error right now so commented out
+        //result.success = "TRUE";
+    
+        //convert result back into string
+        var finalResult = JSON.stringify(result);
+        console.log(finalResult);
+
+        //send result back
+        ws.send(finalResult);
+    });
+    console.log('socket', req.testing);
+    ws.on('close', () => {
+        console.log("Client disconnected.");
+    });
+});
 
 //Start Listening to Server:
 app.listen(3000);
+
+//Middlewares
+//app.use(cors()); //allows front and backend to be in same domain?
+//app.use(bodyParser.json());
+
+//const clientRoute = require('./routes/webclient');
+
+//app.use('/webclient', clientRoute);
+
+//Routes:
+//app.get('/webclient', function (req, res) {
+//    res.send('We are on home');
+//});
+
 //app.onRecieve - when query recieved -> reply to client requests (STEP 2)
