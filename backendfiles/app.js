@@ -23,51 +23,55 @@ mongoose.connect(
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
+/* https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose */
+
 function getOne(collection, query) {
     //finds a single instance that matches the query
     //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
-    collection.findOne(query, function (err, result) {
+    let response = collection.findOne(query, function (err, result) {
         if (err) return handleError(err);
         return result;
     });
     console.log("one result found");
+    return response;
 }
 
 function getAll(collection, query) {
     //finds all instances that match the query
-    collection.find(query, function (err, results) {
+    let response = collection.find(query, function (err, results) {
         if (err) return handleError(err);
         return results;
     });
     console.log("all results found");
+    return response;
 }
 
 function update(collection, query) {
     //update instance with query.id
     collection.updateOne(query.id, query);
-    query.id.save(function (err, result) {
+    query.id.save(function (err) {
         if (err) console.log(err);
-        return result;
     });
     console.log("instance updated");
+    return {updated: true};
 }
 
 function remove(collection, query) {
     collection.deleteOne(query);
-    query.id.remove(function (err, result) {
+    query.id.remove(function (err) {
         if (err) console.log(err);
-        return result;
     });
     console.log("instance deleted");
+    return {deleted: true};
 }
 
 function createInstance(collection, data) {
-    var instance = new collection(data);
-    instance.save(function (err, result) {
+    let instance = new collection(data);
+    instance.save(function (err) {
         if (err) console.log(err);
-        return result;
     });
     console.log("instance added");
+    return {added: "true"};
 }
 
 /* https://www.npmjs.com/package/express-ws */
@@ -76,11 +80,6 @@ app.use(function (req, res, next) {
     console.log('middleware');
     req.testing = 'testing';
     return next();
-});
-
-app.get('/', function(req, res, next) {
-    console.log('get route', req.testing);
-    res.end();
 });
 
 app.ws('/', function(ws, req) {
@@ -107,29 +106,36 @@ app.ws('/', function(ws, req) {
             'plays': Play,
             'diagrams': Diagram
         };
-        const collection = collectionMap[msg.collection];
+
+        var collection = null;
+        try {
+            collection = collectionMap[msg.collection];
+        } catch(error) {
+            console.log(error);
+        }
         
         var result = {};
-    
+
+        //add success flag
+        result.success = "false";
+
         //command string - invokes a function based on command and collection
         if (msg.type=="getOne") {
             result = getOne(collection, msg.data);
-        }
-        if (msg.type=="getAll") {
+        } else if (msg.type=="getAll") {
             result = getAll(collection, msg.data);
-        }
-        if (msg.type=="post") {
+        } else if (msg.type=="post") {
             result = createInstance(collection, msg.data);
-        }
-        if (msg.type=="delete") {
+        } else if (msg.type=="delete") {
             result = remove(msg.data.id);
-        }
-        if (msg.type=="update") {
+        } else if (msg.type=="update") {
             result = update(msg.data);
+        } else {
+            throw new Error("Invalid message type");
         }
     
-        //add success flag - this is raising an error right now so commented out
-        //result.success = "TRUE";
+        //change success flag to true
+        result.success = "true";
     
         //convert result back into string
         var finalResult = JSON.stringify(result);
@@ -146,23 +152,3 @@ app.ws('/', function(ws, req) {
 
 //Start Listening to Server:
 app.listen(3000);
-
-
-/* not sure how much of this we need anymore since no longer using webclient.js:
-
-//Middlewares
-//app.use(cors()); //allows front and backend to be in same domain?
-//app.use(bodyParser.json());
-
-//const clientRoute = require('./routes/webclient');
-
-//app.use('/webclient', clientRoute);
-
-//Routes:
-//app.get('/webclient', function (req, res) {
-//    res.send('We are on home');
-//});
-
-//app.onRecieve - when query recieved -> reply to client requests (STEP 2) 
-
-*/
