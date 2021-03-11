@@ -56,8 +56,7 @@ function update(collection, query, ws) {
 }
 
 function remove(collection, query, ws) {
-    collection.deleteOne(query);
-    query.id.remove(function (err) {
+    collection.findOneAndDelete(query, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws);
     });
