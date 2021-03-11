@@ -50,9 +50,8 @@ function update(collection, query, ws) {
     collection.updateOne(query.id, query);
     query.id.save(function (err) {
         if (err) console.log(err);
-        respondToSocket({updated: true});
+        respondToSocket({updated: true}, ws);
     });
-    console.log("instance updated");
     return {updated: true};
 }
 
@@ -60,9 +59,8 @@ function remove(collection, query, ws) {
     collection.deleteOne(query);
     query.id.remove(function (err) {
         if (err) console.log(err);
-        respondToSocket({deleted: true});
+        respondToSocket({deleted: true}, ws);
     });
-    console.log("instance deleted");
     return {deleted: true};
 }
 
@@ -70,9 +68,8 @@ function createInstance(collection, data, ws) {
     let instance = new collection(data);
     instance.save(function (err) {
         if (err) console.log(err);
-        respondToSocket({added: true});
+        respondToSocket({added: true},ws);
     });
-    console.log("instance added");
     return {added: true};
 }
 
