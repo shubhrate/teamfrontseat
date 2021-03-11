@@ -46,9 +46,8 @@ function getAll(collection, query, ws) {
 }
 
 function update(collection, query, ws) {
-    //update instance with query.id
-    collection.updateOne(query.id, query);
-    query.id.save(function (err) {
+    //update instance with query.id - CANNOT UPDATE THE ID OF AN INSTANCE
+    collection.findOneAndUpdate(query.id, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws);
     });
@@ -56,6 +55,7 @@ function update(collection, query, ws) {
 }
 
 function remove(collection, query, ws) {
+    //delete first instance that matches query
     collection.findOneAndDelete(query, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws);
@@ -64,6 +64,7 @@ function remove(collection, query, ws) {
 }
 
 function createInstance(collection, data, ws) {
+    //create new instance of collection with given data
     let instance = new collection(data);
     instance.save(function (err) {
         if (err) console.log(err);
@@ -121,7 +122,7 @@ app.ws('/', function(ws, req) {
 
         var collection = collectionMap[msg.collection];
         if(!collection) {
-            //Here's where to deal with errors
+            throw new Error("Invalid message collection");
         }
 
         //command string - invokes a function based on command and collection
