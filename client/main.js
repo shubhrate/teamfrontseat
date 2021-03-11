@@ -55,8 +55,9 @@ const testData = [
     }
 ];
 
+const canvas = document.getElementById("diagram");
 //Bare JSON is easy to feed into Diagram
-const diagram = new Diagram("diagram", testData);
+const diagram = new Diagram(canvas, testData);
 diagram.width = window.innerWidth;
 diagram.height = window.innerHeight;
 diagram.windowX = diagram.width / diagram.scale / 2;
@@ -64,14 +65,22 @@ diagram.windowY = diagram.height / diagram.scale / 2;
 
 const inputmanager = new InputManager(diagram);
 
+/*
 const animator = new Animator(diagram);
 animator.animateCross(diagram.entities[3], 2000, 0, -3, Math.PI, 500);
 animator.animatePath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1], 0, (x) => Math.pow(x, 3));
+*/
 
-const client = new WebClient("ws://localhost:3000/webclient", () => {
-    client.send('{message:"hello"}');
+const testMessage = {
+    type: "getAll",
+    collection: "characters",
+    data: {}
+};
+
+const client = new WebClient("ws://localhost:3000", () => {
+    client.send(testMessage);
 }, () => {}, {
-    diagram, inputmanager, animator
+    diagram, inputmanager
 });
 
 diagram.draw();

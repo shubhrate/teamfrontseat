@@ -11,8 +11,8 @@ export default class Diagram {
 	 * @param {string} id the id of this diagram's canvas element
 	 * @param {Object[]} [entList] optional initial array of entity data objects
 	 */
-	constructor(id, entList) {
-		this.canvas = document.getElementById(id);
+	constructor(canvas, entList) {
+		this.canvas = canvas;
 		this.ctx = this.canvas.getContext("2d");
 
 		//Position & scale of viewport

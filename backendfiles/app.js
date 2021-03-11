@@ -25,56 +25,64 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 /* https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose */
 
-function getOne(collection, query) {
+function getOne(collection, query, ws) {
     //finds a single instance that matches the query
     //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
-    let response = collection.findOne(query, function (err, result) {
+    collection.findOne(query, function (err, result) {
         if (err) return handleError(err);
-        return result;
+        console.log(err, result);
+        //callback function accesses ws via closure
+        respondToSocket(result, ws);
     });
-    console.log("one result found");
-    return response;
 }
 
-function getAll(collection, query) {
+function getAll(collection, query, ws) {
     //finds all instances that match the query
-    let response = collection.find(query, function (err, results) {
+    collection.find(query, function (err, result) {
+        console.log(err, result);
         if (err) return handleError(err);
-        return results;
+        respondToSocket(result, ws);
     });
-    console.log("all results found");
-    return response;
 }
 
-function update(collection, query) {
+function update(collection, query, ws) {
     //update instance with query.id
     collection.updateOne(query.id, query);
     query.id.save(function (err) {
         if (err) console.log(err);
+        respondToSocket({updated: true});
     });
     console.log("instance updated");
     return {updated: true};
 }
 
-function remove(collection, query) {
+function remove(collection, query, ws) {
     collection.deleteOne(query);
     query.id.remove(function (err) {
         if (err) console.log(err);
+        respondToSocket({deleted: true});
     });
     console.log("instance deleted");
     return {deleted: true};
 }
 
-function createInstance(collection, data) {
+function createInstance(collection, data, ws) {
     let instance = new collection(data);
     instance.save(function (err) {
         if (err) console.log(err);
+        respondToSocket({added: true});
     });
     console.log("instance added");
-    return {added: "true"};
+    return {added: true};
 }
 
 /* https://www.npmjs.com/package/express-ws */
+
+function respondToSocket(msg, ws) {
+    console.log(msg);
+    const finalResponse = JSON.stringify(msg);
+    ws.send(finalResponse);
+}
 
 app.use(function (req, res, next) {
     console.log('middleware');
@@ -106,43 +114,26 @@ app.ws('/', function(ws, req) {
             'plays': Play,
             'diagrams': Diagram
         };
-
-        var collection = null;
-        try {
-            collection = collectionMap[msg.collection];
-        } catch(error) {
-            console.log(error);
-        }
         
-        var result = {};
+        const requestTypes = {
+            getOne,
+            getAll,
+            update,
+            remove,
+            createInstance
+        };
 
-        //add success flag
-        result.success = "false";
+        var collection = collectionMap[msg.collection];
+        if(!collection) {
+            //Here's where to deal with errors
+        }
 
         //command string - invokes a function based on command and collection
-        if (msg.type=="getOne") {
-            result = getOne(collection, msg.data);
-        } else if (msg.type=="getAll") {
-            result = getAll(collection, msg.data);
-        } else if (msg.type=="post") {
-            result = createInstance(collection, msg.data);
-        } else if (msg.type=="delete") {
-            result = remove(msg.data.id);
-        } else if (msg.type=="update") {
-            result = update(msg.data);
+        if (requestTypes[msg.type]) {
+            requestTypes[msg.type](collection, msg.data, ws);
         } else {
             throw new Error("Invalid message type");
         }
-    
-        //change success flag to true
-        result.success = "true";
-    
-        //convert result back into string
-        var finalResult = JSON.stringify(result);
-        console.log(finalResult);
-
-        //send result back
-        ws.send(finalResult);
     });
     console.log('socket', req.testing);
     ws.on('close', () => {
