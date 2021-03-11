@@ -30,7 +30,7 @@ function isOpen(ws) {
 function onSendMessage()
 {
   console.log("Send a message");
-  let messg = {type: "post", collection: "users", data: {name: "Jane", password: "password", id: "487434"}};
+  let messg = {type: "delete", collection: "users", data: {name: "Jane", password: "password", id: "487434"}};
 	let jsonMessg = JSON.stringify( messg );
 	console.log("Sending " + jsonMessg);
   if (!isOpen(webSocket)) {

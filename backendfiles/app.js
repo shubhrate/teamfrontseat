@@ -58,9 +58,9 @@ function update(collection, query) {
 
 function remove(collection, query) {
     collection.deleteOne(query);
-    query.id.remove(function (err) {
-        if (err) console.log(err);
-    });
+    //query.id.remove(function (err) {
+    //    if (err) console.log(err);
+    //});
     console.log("instance deleted");
     return {deleted: true};
 }
@@ -127,7 +127,7 @@ app.ws('/', function(ws, req) {
         } else if (msg.type=="post") {
             result = createInstance(collection, msg.data);
         } else if (msg.type=="delete") {
-            result = remove(msg.data.id);
+            result = remove(collection, msg.data);
         } else if (msg.type=="update") {
             result = update(msg.data);
         } else {
