@@ -87,50 +87,57 @@ app.use(function (req, res, next) {
     return next();
 });
 
+var clients = [];
+
 app.ws('/', function(ws, req) {
+    var connection = req.accept('any-protocol', req.origin);
+    clients.push(connection);
     ws.on('message', function(msgStr) {
-        console.log("Client connected.");
-    
-        //log message from client
-        console.log(msgStr);
-    
-        //returns an object that matching the string
-        const msg = JSON.parse(msgStr)  
-    
-        //after JSON.parse:
-        /*
-            type: "getOne",
-            collection: "users",
-            data: {name: "Jane", password: "password", id: "487434"}
-        */
+        clients.forEach(function(client) {
+            console.log("Client connected.");
         
-        //reference collection into map of models
-        const collectionMap = {
-            'users': User,
-            'characters': Character,
-            'plays': Play,
-            'diagrams': Diagram
-        };
+            //log message from client
+            console.log(msgStr);
         
-        const requestTypes = {
-            getOne,
-            getAll,
-            update,
-            remove,
-            createInstance
-        };
+            //returns an object that matching the string
+            const msg = JSON.parse(msgStr)  
+        
+            //after JSON.parse:
+            /*
+                type: "getOne",
+                collection: "users",
+                data: {name: "Jane", password: "password", id: "487434"},
+                requestID: 9389328
+            */
+            
+            //reference collection into map of models
+            const collectionMap = {
+                'users': User,
+                'characters': Character,
+                'plays': Play,
+                'diagrams': Diagram
+            };
+            
+            const requestTypes = {
+                getOne,
+                getAll,
+                update,
+                remove,
+                createInstance
+            };
 
-        var collection = collectionMap[msg.collection];
-        if(!collection) {
-            throw new Error("Invalid message collection");
-        }
+            var collection = collectionMap[msg.collection];
+            if(!collection) {
+                throw new Error("Invalid message collection");
+            }
 
-        //command string - invokes a function based on command and collection
-        if (requestTypes[msg.type]) {
-            requestTypes[msg.type](collection, msg.data, ws);
-        } else {
-            throw new Error("Invalid message type");
-        }
+            //command string - invokes a function based on command and collection
+            if (requestTypes[msg.type]) {
+                requestTypes[msg.type](collection, msg.data, ws);
+            } else {
+                throw new Error("Invalid message type");
+            }
+        });
     });
     console.log('socket', req.testing);
     ws.on('close', () => {
