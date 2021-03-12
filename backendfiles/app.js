@@ -11,8 +11,18 @@ const Diagram = require('./models/Diagram');
 const Play = require('./models/Play');
 const User = require('./models/User');
 
+const MojoClient = require("./MojoClient.js");
+
 //Server connects to DB
 require('dotenv/config');
+
+var clientSocketPort = 3000;
+
+var mojoSocketPort = 4030;
+var socketServer = new WebSocket.Server({port:mojoSocketPort});
+var playersMap = new Map();
+var playersMapUpdateInterval = undefined;
+var mojoClientsMap = new Map();
 
 mongoose.connect(
     process.env.DB_CONNECTION,
@@ -81,11 +91,114 @@ function respondToSocket(msg, ws) {
     ws.send(finalResponse);
 }
 
+
 app.use(function (req, res, next) {
     console.log('middleware');
     req.testing = 'testing';
     return next();
 });
+
+socketServer.on('connection', function(socket) {
+    console.log("Client connected on vive socket");
+    socket.on('messagge', function(incomingMessgJason) {
+        let incomingMessg = JSON.parse(incomingMessgJson);
+        console.log(JSON.stringify(incomingMessg));
+        if (incomingMessg.cmd == "new player") {
+            console.log("create new player: " + incmomingMessg.id +
+            " with Mojo server on port#" + incomingMessg.mojoPort +
+            " at IP address: " + incomingMessg.mojoIpAddress);
+            
+        } else if(incomingMessg.cmd == "pause live motion") {
+			// The director's WebClient says everyone pauses live motion streaming
+			pauseMojoServers();
+		} else if(incomingMessg.cmd == "start live motion") {
+			// The director's WebClient says everyone starts live motion streaming for acting
+			startMojoServers();
+		} else if(incomingMessg.cmd == "quit player") {
+			console.log("quit player: " + incomingMessg.id);
+			if(incomingMessg.id != undefined) {
+				playersMap.delete(incomingMessg.id);
+			}
+		  let messg = { cmd: "quit player", id: incomingMessg.id };
+		  socket.send(JSON.stringify(messg));
+		}
+    });
+});
+
+playersMapUpdateInterval = setInterval(broadcastMap, 1000 / 30);
+
+function broadcastMap() {
+	let playerList = Array.from( playersMap.values() );
+    let messg = { cmd: "state", players: playerList };
+    let jsonMessg = JSON.stringify(messg);
+    let numClients = socketServer.clients.length;
+	for(let i = 0; i < numClients; i++) {
+		let client = socketServer.clients[i];
+	    if (client.readyState == WebSocket.OPEN)
+			client.send(jsonMessg);
+	}
+}
+
+/* Create a MojoClient to manage and receive incoming motion tracker server data
+ * for one remote client.
+ * @param {integer} portNumber - port number of WebSocket used by a motion tracker server.
+ * @param {string} ipAddress - WebSocket IP address, example "192.168.10.1" or for
+ *        server on localhost use "localhost" or "" empty string.
+ */
+function createMojoClient(portNumber, ipAddress) {		
+    let mojoClient = new MojoClient();
+    mojoClient.setDataHandler(onMojoData);
+	
+    // MojoClient connect method will construct the WebSocket URI
+	// string of the form: "ws://192.168.10.1:3030", where ipAddress "192.168.10.1"
+    // and portNumber is 3030.	
+	mojoClient.connect(portNumber, ipAddress);
+	
+	return mojoClient;
+}
+
+function onMojoData(data) {
+    // Sample incoming JSON message from a remote user's Vive tracker server.
+    // { "time": 32.1,
+    //   "channels":[{"id": "Jane" ,"pos": {"x":0.1, "y":0,"z":2.3},
+    //             "rot":{"x":0, "y": 45, "z":0}}]}
+    let timeStamp = data.time;
+    // We expect each remote site to send data for only one moving performer.
+    for (let c = 0; c < data.channels.length; c++) {
+		let rigidBody = data.channels[c];
+		
+		// Get moving player object by unique ID provided by incoming motion-tracker server data stream.
+		let player = playersMap.get(rigidBody.id);
+		if (player != undefined) {	
+			// Each MojoClient motion sensor defines the range of its positional data.
+			let bounds = mojoClient.serverState.bounds;
+		
+			// Convert rigid body position from sensor device coordinates to 
+			// current play stage dimensions.
+			
+			// For this unit test demo, we assume stage is canvas of size 800 x 600
+			let x = ((rigidBody.pos.x - bounds.minX)/(bounds.maxX - bounds.minX)) * 800;
+			let y = ((rigidBody.pos.z - bounds.minZ)/(bounds.maxZ - bounds.minZ)) * 600;			
+			player.x = x;
+			player.y = y;
+			player.angle = body.rot.y; // rotation angle in degrees.
+		} // end if player is defined.
+	}
+}
+
+function startMojoServers()
+{
+	let mojoClientsList = Array.from( mojoClientsMap.values() );	
+	for(let i = 0; i < mojoClientsList.length; i++)
+		mojoClientsList[i].sendMessageBroadcast(true);
+}
+
+function pauseMojoServers()
+{
+	let mojoClientsList = Array.from( mojoClientsMap.values() );	
+	for(let i = 0; i < mojoClientsList.length; i++)
+		mojoClientsList[i].sendMessageBroadcast(false);
+}
 
 var clients = [];
 
@@ -146,4 +259,4 @@ app.ws('/', function(ws, req) {
 });
 
 //Start Listening to Server:
-app.listen(3000);
+app.listen(clientSocketPort);
