@@ -100,7 +100,7 @@ app.use(function (req, res, next) {
 
 socketServer.on('connection', function(socket) {
     console.log("Client connected on vive socket");
-    socket.on('messagge', function(incomingMessgJason) {
+    socket.on('message', function(incomingMessgJason) {
         let incomingMessg = JSON.parse(incomingMessgJson);
         console.log(JSON.stringify(incomingMessg));
         if (incomingMessg.cmd == "new player") {
@@ -108,15 +108,15 @@ socketServer.on('connection', function(socket) {
             " with Mojo server on port#" + incomingMessg.mojoPort +
             " at IP address: " + incomingMessg.mojoIpAddress);
             
-        } else if(incomingMessg.cmd == "pause live motion") {
+        } else if (incomingMessg.cmd == "pause live motion") {
 			// The director's WebClient says everyone pauses live motion streaming
 			pauseMojoServers();
-		} else if(incomingMessg.cmd == "start live motion") {
+		} else if (incomingMessg.cmd == "start live motion") {
 			// The director's WebClient says everyone starts live motion streaming for acting
 			startMojoServers();
-		} else if(incomingMessg.cmd == "quit player") {
+		} else if (incomingMessg.cmd == "quit player") {
 			console.log("quit player: " + incomingMessg.id);
-			if(incomingMessg.id != undefined) {
+			if (incomingMessg.id != undefined) {
 				playersMap.delete(incomingMessg.id);
 			}
 		  let messg = { cmd: "quit player", id: incomingMessg.id };
@@ -244,12 +244,14 @@ app.ws('/', function(ws, req) {
                 throw new Error("Invalid message collection");
             }
 
-            //command string - invokes a function based on command and collection
-            if (requestTypes[msg.type]) {
+            if (requestTypes[msg.type]) { 
+                //command string - invokes a function based on command and collection
                 requestTypes[msg.type](collection, msg.data, ws);
             } else {
                 throw new Error("Invalid message type");
             }
+            
+            
         });
     });
     console.log('socket', req.testing);
