@@ -31,8 +31,7 @@ app.use(function (req, res, next) {
 });
 
 app.ws('/', function(ws, req) {
-    var connection = req.accept('any-protocol', req.origin);
-    clients.push(connection);
+    clients.push(ws);
     ws.on('message', function(msgStr) {
         console.log("Client connected.");
 
@@ -113,7 +112,7 @@ function update(collection, query, ws) {
     //update instance with query.id - CANNOT UPDATE THE ID OF AN INSTANCE
     collection.findOneAndUpdate(query.id, query, function (err) {
         if (err) console.log(err);
-        respondToSocket({updated: true}, ws);
+        broadcastToClients({updated: true}, ws, query);
     });
     return {updated: true};
 }
@@ -122,7 +121,7 @@ function remove(collection, query, ws) {
     //delete first instance that matches query
     collection.findOneAndDelete(query, function (err) {
         if (err) console.log(err);
-        respondToSocket({deleted: true}, ws);
+        broadcastToClients({deleted: true}, ws, query);
     });
     return {deleted: true};
 }
@@ -132,7 +131,7 @@ function createInstance(collection, data, ws) {
     let instance = new collection(data);
     instance.save(function (err) {
         if (err) console.log(err);
-        respondToSocket({added: true},ws);
+        broadcastToClients({added: true}, ws, data);
     });
     return {added: true};
 }
@@ -145,8 +144,13 @@ function respondToSocket(msg, ws) {
     ws.send(finalResponse);
 }
 
-function broadcastToClients(msg, clients) {
-
+function broadcastToClients(msg, ws, query) {
+    respondToSocket(msg, ws);
+    for (client in clients) {
+        if (client != ws) {
+            client.send(query);
+        }
+    }
 }
 
 /** Connection to Vive */
