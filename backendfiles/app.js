@@ -1,9 +1,8 @@
 /** Connection to database */
 const mongoose = require('mongoose');
 
-const Character = require('./models/Character');
+const Entity = require('./models/Entity');
 const Diagram = require('./models/Diagram');
-const Play = require('./models/Play');
 const User = require('./models/User');
 
 require('dotenv/config');
@@ -36,13 +35,13 @@ app.ws('/', function(ws, req) {
     clients.push(connection);
     ws.on('message', function(msgStr) {
         console.log("Client connected.");
-        
+
         //log message from client
         console.log(msgStr);
-        
+
         //returns an object that matching the string
-        const msg = JSON.parse(msgStr)  
-        
+        const msg = JSON.parse(msgStr)
+
         //after JSON.parse:
         /*
             type: "getOne",
@@ -50,7 +49,7 @@ app.ws('/', function(ws, req) {
             data: {name: "Jane", password: "password", id: "487434"},
             requestID: 9389328
         */
-            
+
         //reference collection into map of models
         const collectionMap = {
             'users': User,
@@ -58,7 +57,7 @@ app.ws('/', function(ws, req) {
             'plays': Play,
             'diagrams': Diagram
         };
-            
+
         const requestTypes = {
             getOne,
             getAll,
@@ -72,12 +71,12 @@ app.ws('/', function(ws, req) {
             throw new Error("Invalid message collection");
         }
 
-        if (requestTypes[msg.type]) { 
+        if (requestTypes[msg.type]) {
             //command string - invokes a function based on command and collection
             requestTypes[msg.type](collection, msg.data, ws);
         } else {
             throw new Error("Invalid message type");
-        }    
+        }
     });
     console.log('socket', req.testing);
     ws.on('close', () => {
@@ -184,7 +183,7 @@ socketServer.on('connection', function(socket) {
 
                 // New player request will specify the port number and remote WebSocket URI
                 // of each player's motion-tracker server.
-                // This central server will use a MojoClient to manage each remote motion data stream.				
+                // This central server will use a MojoClient to manage each remote motion data stream.
                 let mojoClient = createMojoClient(incomingMessg.mojoPort, incomingMessg.mojoIpAddress);
                 mojoClientsMap.set(incomingMessg.id, mojoClient);
             }
