@@ -1,11 +1,12 @@
 import Diagram from "./js/diagram.js";
 import InputManager from "./js/inputmanager.js";
 import Animator from "./js/animator.js";
-import WebClient from "./js/webclient.js";
+import * as client from "./js/webclient.js";
 
 //Pretend like this came from a database request.
 const testData = [
     {
+        id: "178376b49b2-47d78811",
         class: "furniture",
         drawType: "furn_chair",
         name: "chair",
@@ -19,6 +20,7 @@ const testData = [
         //offstage?
     },
     {
+        id: "178376bd722-3ce707b5",
         class: "furniture",
         drawType: "furn_chair",
         name: "chair",
@@ -30,6 +32,7 @@ const testData = [
         angle: Math.PI * 0.75
     },
     {
+        id: "178376c1f97-f0fa6018",
         class: "actor",
         drawType: "actor",
         name: "Jane Doe",
@@ -42,6 +45,7 @@ const testData = [
         angle: Math.PI
     },
     {
+        id: "178376c5ebe-0ed6977d",
         class: "actor",
         drawType: "actor",
         name: "John Smith",
@@ -57,7 +61,7 @@ const testData = [
 
 const canvas = document.getElementById("diagram");
 //Bare JSON is easy to feed into Diagram
-const diagram = new Diagram(canvas, testData);
+const diagram = new Diagram("1", canvas, testData);
 diagram.width = window.innerWidth;
 diagram.height = window.innerHeight;
 diagram.windowX = diagram.width / diagram.scale / 2;
@@ -77,10 +81,8 @@ const testMessage = {
     data: {}
 };
 
-const client = new WebClient("ws://localhost:3000", () => {
-    client.send(testMessage);
-}, () => {}, {
-    diagram, inputmanager
+client.open("ws://localhost:3000", () => {
+    client.send(testMessage, (data) => console.log(data));
 });
 
 diagram.draw();

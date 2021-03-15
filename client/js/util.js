@@ -13,7 +13,7 @@ export function pythag(a, b) {
 export function uniqueID() {
 	const datePart = Date.now().toString(16);
 	const randPart = Math.floor(Math.random() * 0x100000000).toString(16);
-	return datePart + "-" + randPart;
+	return datePart + "-" + randPart.padStart(8, "0");
 }
 /*
 This is nonstandard, but should be robust enough to avoid collisions.
