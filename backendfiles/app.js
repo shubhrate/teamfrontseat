@@ -1,28 +1,12 @@
-const express = require('express');
-const app = express();
-const expressWs = require('express-ws')(app);
-
+/** Connection to database */
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const cors = require('cors');
 
 const Character = require('./models/Character');
 const Diagram = require('./models/Diagram');
 const Play = require('./models/Play');
 const User = require('./models/User');
 
-const MojoClient = require("./MojoClient.js");
-
-//Server connects to DB
 require('dotenv/config');
-
-var clientSocketPort = 3000;
-
-var mojoSocketPort = 4030;
-var socketServer = new WebSocket.Server({port:mojoSocketPort});
-var playersMap = new Map();
-var playersMapUpdateInterval = undefined;
-var mojoClientsMap = new Map();
 
 mongoose.connect(
     process.env.DB_CONNECTION,
@@ -32,6 +16,77 @@ mongoose.connect(
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
+/** Connection to client */
+const express = require('express');
+const app = express();
+const expressWs = require('express-ws')(app);
+
+var clientSocketPort = 3000;
+var clients = [];
+
+app.use(function (req, res, next) {
+    console.log('middleware');
+    req.testing = 'testing';
+    return next();
+});
+
+app.ws('/', function(ws, req) {
+    var connection = req.accept('any-protocol', req.origin);
+    clients.push(connection);
+    ws.on('message', function(msgStr) {
+        console.log("Client connected.");
+        
+        //log message from client
+        console.log(msgStr);
+        
+        //returns an object that matching the string
+        const msg = JSON.parse(msgStr)  
+        
+        //after JSON.parse:
+        /*
+            type: "getOne",
+            collection: "users",
+            data: {name: "Jane", password: "password", id: "487434"},
+            requestID: 9389328
+        */
+            
+        //reference collection into map of models
+        const collectionMap = {
+            'users': User,
+            'characters': Character,
+            'plays': Play,
+            'diagrams': Diagram
+        };
+            
+        const requestTypes = {
+            getOne,
+            getAll,
+            update,
+            remove,
+            createInstance
+        };
+
+        var collection = collectionMap[msg.collection];
+        if(!collection) {
+            throw new Error("Invalid message collection");
+        }
+
+        if (requestTypes[msg.type]) { 
+            //command string - invokes a function based on command and collection
+            requestTypes[msg.type](collection, msg.data, ws);
+        } else {
+            throw new Error("Invalid message type");
+        }    
+    });
+    console.log('socket', req.testing);
+    ws.on('close', () => {
+        console.log("Client disconnected.");
+    });
+});
+
+//Start Listening to Server:
+app.listen(clientSocketPort);
 
 /* https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose */
 
@@ -91,12 +146,20 @@ function respondToSocket(msg, ws) {
     ws.send(finalResponse);
 }
 
+function broadcastToClients(msg, clients) {
 
-app.use(function (req, res, next) {
-    console.log('middleware');
-    req.testing = 'testing';
-    return next();
-});
+}
+
+/** Connection to Vive */
+const MojoClient = require("./MojoClient.js");
+
+var mojoSocketPort = 4030;
+var WebSocket = require('ws');
+var socketServer = new WebSocket.Server({port:mojoSocketPort});
+var playersMap = new Map();
+var playersMapUpdateInterval = undefined;
+var mojoClientsMap = new Map();
+
 
 socketServer.on('connection', function(socket) {
     console.log("Client connected on vive socket");
@@ -107,7 +170,24 @@ socketServer.on('connection', function(socket) {
             console.log("create new player: " + incmomingMessg.id +
             " with Mojo server on port#" + incomingMessg.mojoPort +
             " at IP address: " + incomingMessg.mojoIpAddress);
-            
+            if(incomingMessg.id != undefined) {
+                // Construct a player object, can omit color attribute.
+                let player = { id: incomingMessg.id, x: 300, y: 300, angle: 0,
+                        mojoPort: incomingMessg.mojoPort,
+                        mojoIpAddress: incomingMessg.mojoIpAddress };
+                playersMap.set(incomingMessg.id, player );
+
+                // Reply message to confirm success.
+		        let messg = { cmd: "new player", id: incomingMessg.id,
+                mojoPort: incomingMessg.mojoPort, mojoIpAddress: incomingMessg.mojoIpAddress };
+                socket.send(JSON.stringify(messg));
+
+                // New player request will specify the port number and remote WebSocket URI
+                // of each player's motion-tracker server.
+                // This central server will use a MojoClient to manage each remote motion data stream.				
+                let mojoClient = createMojoClient(incomingMessg.mojoPort, incomingMessg.mojoIpAddress);
+                mojoClientsMap.set(incomingMessg.id, mojoClient);
+            }
         } else if (incomingMessg.cmd == "pause live motion") {
 			// The director's WebClient says everyone pauses live motion streaming
 			pauseMojoServers();
@@ -199,66 +279,3 @@ function pauseMojoServers()
 	for(let i = 0; i < mojoClientsList.length; i++)
 		mojoClientsList[i].sendMessageBroadcast(false);
 }
-
-var clients = [];
-
-app.ws('/', function(ws, req) {
-    var connection = req.accept('any-protocol', req.origin);
-    clients.push(connection);
-    ws.on('message', function(msgStr) {
-        clients.forEach(function(client) {
-            console.log("Client connected.");
-        
-            //log message from client
-            console.log(msgStr);
-        
-            //returns an object that matching the string
-            const msg = JSON.parse(msgStr)  
-        
-            //after JSON.parse:
-            /*
-                type: "getOne",
-                collection: "users",
-                data: {name: "Jane", password: "password", id: "487434"},
-                requestID: 9389328
-            */
-            
-            //reference collection into map of models
-            const collectionMap = {
-                'users': User,
-                'characters': Character,
-                'plays': Play,
-                'diagrams': Diagram
-            };
-            
-            const requestTypes = {
-                getOne,
-                getAll,
-                update,
-                remove,
-                createInstance
-            };
-
-            var collection = collectionMap[msg.collection];
-            if(!collection) {
-                throw new Error("Invalid message collection");
-            }
-
-            if (requestTypes[msg.type]) { 
-                //command string - invokes a function based on command and collection
-                requestTypes[msg.type](collection, msg.data, ws);
-            } else {
-                throw new Error("Invalid message type");
-            }
-            
-            
-        });
-    });
-    console.log('socket', req.testing);
-    ws.on('close', () => {
-        console.log("Client disconnected.");
-    });
-});
-
-//Start Listening to Server:
-app.listen(clientSocketPort);
