@@ -3,6 +3,8 @@ import InputManager from "./js/inputmanager.js";
 import Animator from "./js/animator.js";
 import * as client from "./js/webclient.js";
 
+import address from "./_addr.js";
+
 //Pretend like this came from a database request.
 const testData = [
     {
@@ -64,7 +66,7 @@ const testData = [
 ];
 //TODO / NOTE: diagramID will likely be in uniqueID format later
 
-client.open("ws://localhost:3000", () => {
+client.open(address, () => {
     client.send({
         type: "getAll",
         collection: "entities",
