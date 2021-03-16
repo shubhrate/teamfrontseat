@@ -80,6 +80,7 @@ app.ws('/', function(ws, req) {
     ws.on('close', (ws) => {
         clients.splice(clients.indexOf(ws), 1);
         console.log("Client disconnected.");
+        console.log(ws);
     });
 });
 
@@ -110,10 +111,15 @@ function getAll(collection, query, ws, requestID) {
 
 function update(collection, query, ws, requestID) {
     //update instance with query.id - CANNOT UPDATE THE ID OF AN INSTANCE
-    collection.findOneAndUpdate({id: query.id}, query, function (err) {
+    const id = query.id;
+    const isEntity = collection === Entity;
+    collection.findOneAndUpdate({id}, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws, requestID);
-        broadcastToClients(ws, query);
+        if(isEntity) broadcastToClients(ws, {
+            type: "entity_update",
+            data: query
+        });
     });
 }
 
@@ -143,15 +149,21 @@ function respondToSocket(msg, ws, requestID) {
     if(requestID) {
         msg.requestID = requestID;
     }
-    console.log(msg);
+    console.log("Responded to request " + requestID);
     const finalResponse = JSON.stringify(msg);
     ws.send(finalResponse);
 }
 
 function broadcastToClients(ws, query) {
+    const msg = JSON.stringify(query);
     for (const client of clients) {
-        if (client != ws) {
-            client.send(query);
+        if (client !== ws) {
+            if(client.readyState === WebSocket.OPEN) {
+                client.send(msg);
+            } else {
+                clients.splice(clients.indexOf(client), 1);
+                console.log("Pruned closed connection!");
+            }
         }
     }
 }

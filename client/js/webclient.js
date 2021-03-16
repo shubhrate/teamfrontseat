@@ -38,8 +38,10 @@ const requestTypes = {
 	Update one or more properties of one entity
 	DATA: entity id and the attributes to be updated, in a flat object.
 	*/
-	"entity_update": function(data, app) {
-		const entity = app.diagram.getEntityById(data.id);
+	"entity_update": function(data) {
+		console.log(data);
+		const diagram = diagrams[data.diagramID];
+		const entity = diagram.getEntityById(data.id);
 		delete data.id;
 		//With id out of the way, we drop other properties into the entity
 		for(const p in data) { //Notice: "in," not "of." They're different.
@@ -49,7 +51,7 @@ const requestTypes = {
 				entity.data[p] = data[p];
 			}
 		}
-		app.diagram.draw();
+		diagram.draw();
 	}
 }
 
@@ -72,10 +74,10 @@ function onWSMessage(e) {
 		}
 	} else if(msg.hasOwnProperty("type")) {
 		//Message is a request from the server - look for handler
-		if(!requestHandler.hasOwnProperty(msg.type)) {
+		if(!requestTypes.hasOwnProperty(msg.type)) {
 			console.error("Socket: recieved message with invalid type: ", msg.type);
 		}
-		const requestHandler = requestTypes[msg.type];
+		requestTypes[msg.type](msg.data);
 	} else {
 		console.error("Socket: unsure what to do with incoming message");
 		console.log("Message contents:", msg);

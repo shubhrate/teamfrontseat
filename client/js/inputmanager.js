@@ -12,6 +12,21 @@ function updateEntitiesOnServer(entArray) {
 	queueUpdate("entities", ...entData);
 }
 
+function updateEntityPropertiesOnServer(entArray, propArray) {
+	let entData = [];
+	for (const ent of entArray) {
+		const dataObj = {
+			"id": ent.data.id,
+			"diagramID": ent.data.diagramID
+		};
+		for (const prop of propArray) {
+			dataObj[prop] = ent.data[prop];
+		}
+		entData.push(dataObj);
+	}
+	queueUpdate("entities", ...entData);
+}
+
 export default class InputManager {
 	/**
 	 * Create an InputManager, attach it to a Diagram, and add event listeners.
@@ -68,7 +83,7 @@ export default class InputManager {
 			for(const f of focus) {
 				f.angle = f.angle + (delta * Math.PI * 0.02) % (Math.PI * 2);
 			}
-			updateEntitiesOnServer(focus);
+			updateEntityPropertiesOnServer(focus, ["angle"]);
 		} else { //Scroll wheel is zooming the viewport
 			const newScale = Math.max(this.diagram.scale - delta, 1);
 			const dimScale = this.diagram.scale / newScale;
@@ -103,7 +118,7 @@ export default class InputManager {
 					s.posX += e.movementX / this.diagram.scale;
 					s.posY += e.movementY / this.diagram.scale;
 				}
-				updateEntitiesOnServer(this.selectedEntities);
+				updateEntityPropertiesOnServer(this.selectedEntities, ["posX", "posY"]);
 			} else { //Mouse is dragging the viewport
 				this.diagram.windowX += e.movementX / this.diagram.scale;
 				this.diagram.windowY += e.movementY / this.diagram.scale;

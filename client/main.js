@@ -73,6 +73,7 @@ client.open("ws://localhost:3000", () => {
         const canvas = document.getElementById("diagram");
         //Bare JSON is easy to feed into Diagram
         const diagram = new Diagram("1", canvas, data.result);
+        client.registerDiagram(diagram);
         diagram.width = window.innerWidth;
         diagram.height = window.innerHeight;
         diagram.windowX = diagram.width / diagram.scale / 2;
