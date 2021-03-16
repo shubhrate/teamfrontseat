@@ -112,6 +112,7 @@ function update(collection, query, ws, requestID) {
     collection.findOneAndUpdate(query.id, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws, requestID);
+        broadcastToClients(ws, query);
     });
 }
 
@@ -120,6 +121,7 @@ function remove(collection, query, ws, requestID) {
     collection.findOneAndDelete(query, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws, requestID);
+        broadcastToClients(ws, query);
     });
 }
 
@@ -129,6 +131,7 @@ function createInstance(collection, data, ws, requestID) {
     instance.save(function (err) {
         if (err) console.log(err);
         respondToSocket({added: true}, ws, requestID);
+        broadcastToClients(ws, data);
     });
 }
 
@@ -144,8 +147,12 @@ function respondToSocket(msg, ws, requestID) {
     ws.send(finalResponse);
 }
 
-function broadcastToClients(msg, clients) {
-
+function broadcastToClients(ws, query) {
+    for (const client of clients) {
+        if (client != ws) {
+            client.send(query);
+        }
+    }
 }
 
 /** Connection to Vive */
