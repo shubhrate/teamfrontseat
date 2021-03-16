@@ -7,6 +7,7 @@ import * as client from "./js/webclient.js";
 const testData = [
     {
         id: "178376b49b2-47d78811",
+        diagramID: "1",
         class: "furniture",
         drawType: "furn_chair",
         name: "chair",
@@ -21,6 +22,7 @@ const testData = [
     },
     {
         id: "178376bd722-3ce707b5",
+        diagramID: "1",
         class: "furniture",
         drawType: "furn_chair",
         name: "chair",
@@ -33,6 +35,7 @@ const testData = [
     },
     {
         id: "178376c1f97-f0fa6018",
+        diagramID: "1",
         class: "actor",
         drawType: "actor",
         name: "Jane Doe",
@@ -46,6 +49,7 @@ const testData = [
     },
     {
         id: "178376c5ebe-0ed6977d",
+        diagramID: "1",
         class: "actor",
         drawType: "actor",
         name: "John Smith",
@@ -58,16 +62,27 @@ const testData = [
         angle: 0
     }
 ];
+//TODO / NOTE: diagramID will likely be in uniqueID format later
 
-const canvas = document.getElementById("diagram");
-//Bare JSON is easy to feed into Diagram
-const diagram = new Diagram("1", canvas, testData);
-diagram.width = window.innerWidth;
-diagram.height = window.innerHeight;
-diagram.windowX = diagram.width / diagram.scale / 2;
-diagram.windowY = diagram.height / diagram.scale / 2;
+client.open("ws://localhost:3000", () => {
+    client.send({
+        type: "getAll",
+        collection: "entities",
+        data: {diagramID: "1"}
+    }, function(data) {
+        const canvas = document.getElementById("diagram");
+        //Bare JSON is easy to feed into Diagram
+        const diagram = new Diagram("1", canvas, data.result);
+        diagram.width = window.innerWidth;
+        diagram.height = window.innerHeight;
+        diagram.windowX = diagram.width / diagram.scale / 2;
+        diagram.windowY = diagram.height / diagram.scale / 2;
 
-const inputmanager = new InputManager(diagram);
+        new InputManager(diagram);
+
+        diagram.draw();
+    });
+});
 
 /*
 const animator = new Animator(diagram);
@@ -77,12 +92,12 @@ animator.animatePath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1], 0, (x) => 
 
 const testMessage = {
     type: "getAll",
-    collection: "characters",
-    data: {}
+    collection: "entities",
+    data: {diagramID: "1"}
 };
 
+/*
 client.open("ws://localhost:3000", () => {
-    client.send(testMessage, (data) => console.log(data));
+    //client.send(testMessage, (data) => console.log(data));
 });
-
-diagram.draw();
+*/

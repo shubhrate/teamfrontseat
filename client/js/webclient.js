@@ -64,10 +64,12 @@ export function registerDiagram(dg) {
 function onWSMessage(e) {
 	const msg = JSON.parse(e.data);
 
-	if(msg.hasOwnProperty("id") && pendingCallbacks.hasOwnProperty(msg.id)) {
+	if(msg.hasOwnProperty("requestID")) {
 		//Message is a response to a request - look for callback
-		pendingCallbacks[msg.id](msg);
-		delete pendingCallbacks[msg.id];
+		if (pendingCallbacks.hasOwnProperty(msg.requestID)) {
+			pendingCallbacks[msg.requestID](msg);
+			delete pendingCallbacks[msg.id];
+		}
 	} else if(msg.hasOwnProperty("type")) {
 		//Message is a request from the server - look for handler
 		if(!requestHandler.hasOwnProperty(msg.type)) {
@@ -111,8 +113,9 @@ export function send(msg, callback) {
 		console.error("Socket: attempt to send message while socket closed!");
 		return;
 	}
+	console.log(callback);
 	const id = uniqueID();
-	msg.id = id;
+	msg.requestID = id;
 	if(callback) {
 		pendingCallbacks[id] = callback;
 	}
@@ -139,6 +142,8 @@ pendingUpdates = {
 		"178376bd722-3ce707b5": {<diagram data object>}
 	}
 }
+It gets cleared out any time unblockUpdatesAndSend runs.
+TODO: this is memory-inefficient. Fix sometime?
 */
 
 function unblockUpdatesAndSend() {
@@ -160,7 +165,12 @@ function sendUpdates(collection, objArray) {
 	}
 }
 
-//Applies rate limits to update requests, so we don't spam the server
+/**
+ * Registers data to be changed on the server via an update request.
+ * Applies rate limiting: requests are only sent every UPDATE_BLOCK_TIME seconds
+ * @param {string} collection the server collection to update
+ * @param  {...object} objects object data to update
+ */
 export function queueUpdate(collection, ...objects) {
 	if(blockUpdates) {
 		if(!pendingUpdates.hasOwnProperty(collection)) {

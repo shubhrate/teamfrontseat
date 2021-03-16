@@ -9,7 +9,7 @@ function updateEntitiesOnServer(entArray) {
 	for(const e of entArray) {
 		entData.push(e.data);
 	}
-	queueUpdate("entity", ...entData);
+	queueUpdate("entities", ...entData);
 }
 
 export default class InputManager {

@@ -31,8 +31,7 @@ app.use(function (req, res, next) {
 });
 
 app.ws('/', function(ws, req) {
-    var connection = req.accept('any-protocol', req.origin);
-    clients.push(connection);
+    clients.push(ws);
     ws.on('message', function(msgStr) {
         console.log("Client connected.");
 
@@ -40,7 +39,7 @@ app.ws('/', function(ws, req) {
         console.log(msgStr);
 
         //returns an object that matching the string
-        const msg = JSON.parse(msgStr)
+        const msg = JSON.parse(msgStr);
 
         //after JSON.parse:
         /*
@@ -53,8 +52,7 @@ app.ws('/', function(ws, req) {
         //reference collection into map of models
         const collectionMap = {
             'users': User,
-            'characters': Character,
-            'plays': Play,
+            'entities': Entity,
             'diagrams': Diagram
         };
 
@@ -68,12 +66,12 @@ app.ws('/', function(ws, req) {
 
         var collection = collectionMap[msg.collection];
         if(!collection) {
-            throw new Error("Invalid message collection");
+            throw new Error("Invalid message collection: " + msg.collection);
         }
 
         if (requestTypes[msg.type]) {
             //command string - invokes a function based on command and collection
-            requestTypes[msg.type](collection, msg.data, ws);
+            requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
         } else {
             throw new Error("Invalid message type");
         }
@@ -89,57 +87,58 @@ app.listen(clientSocketPort);
 
 /* https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose */
 
-function getOne(collection, query, ws) {
+function getOne(collection, query, ws, requestID) {
     //finds a single instance that matches the query
     //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
     collection.findOne(query, function (err, result) {
         if (err) return handleError(err);
         console.log(err, result);
         //callback function accesses ws via closure
-        respondToSocket(result, ws);
+        respondToSocket({result}, ws, requestID);
     });
 }
 
-function getAll(collection, query, ws) {
+function getAll(collection, query, ws, requestID) {
     //finds all instances that match the query
     collection.find(query, function (err, result) {
         console.log(err, result);
         if (err) return handleError(err);
-        respondToSocket(result, ws);
+        respondToSocket({result}, ws, requestID);
     });
 }
 
-function update(collection, query, ws) {
+function update(collection, query, ws, requestID) {
     //update instance with query.id - CANNOT UPDATE THE ID OF AN INSTANCE
     collection.findOneAndUpdate(query.id, query, function (err) {
         if (err) console.log(err);
-        respondToSocket({updated: true}, ws);
+        respondToSocket({updated: true}, ws, requestID);
     });
-    return {updated: true};
 }
 
-function remove(collection, query, ws) {
+function remove(collection, query, ws, requestID) {
     //delete first instance that matches query
     collection.findOneAndDelete(query, function (err) {
         if (err) console.log(err);
-        respondToSocket({deleted: true}, ws);
+        respondToSocket({deleted: true}, ws, requestID);
     });
-    return {deleted: true};
 }
 
-function createInstance(collection, data, ws) {
+function createInstance(collection, data, ws, requestID) {
     //create new instance of collection with given data
     let instance = new collection(data);
     instance.save(function (err) {
         if (err) console.log(err);
-        respondToSocket({added: true},ws);
+        respondToSocket({added: true}, ws, requestID);
     });
-    return {added: true};
 }
 
 /* https://www.npmjs.com/package/express-ws */
 
-function respondToSocket(msg, ws) {
+//TODO: get a better callback structure going than this
+function respondToSocket(msg, ws, requestID) {
+    if(requestID) {
+        msg.requestID = requestID;
+    }
     console.log(msg);
     const finalResponse = JSON.stringify(msg);
     ws.send(finalResponse);

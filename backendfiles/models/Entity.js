@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
+const properties = require('./properties');
 
 const EntitySchema = mongoose.Schema({
+    id: {
+        type: String,
+        required: true
+    },
     diagramID: {
         type: String,
         required: true
@@ -41,6 +46,6 @@ const EntitySchema = mongoose.Schema({
         type: Number,
         required: true
     },
-});
+}, properties);
 
 module.exports = mongoose.model('Entities', EntitySchema);
