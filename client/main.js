@@ -90,13 +90,12 @@ animator.animateCross(diagram.entities[3], 2000, 0, -3, Math.PI, 500);
 animator.animatePath(diagram.entities[2], 2000, [1, 3, 2], [3, 2, 1], 0, (x) => Math.pow(x, 3));
 */
 
+/*
 const testMessage = {
     type: "getAll",
     collection: "entities",
     data: {diagramID: "1"}
 };
-
-/*
 client.open("ws://localhost:3000", () => {
     //client.send(testMessage, (data) => console.log(data));
 });

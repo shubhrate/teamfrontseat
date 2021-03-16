@@ -77,7 +77,8 @@ app.ws('/', function(ws, req) {
         }
     });
     console.log('socket', req.testing);
-    ws.on('close', () => {
+    ws.on('close', (ws) => {
+        clients.splice(clients.indexOf(ws), 1);
         console.log("Client disconnected.");
     });
 });
@@ -109,7 +110,7 @@ function getAll(collection, query, ws, requestID) {
 
 function update(collection, query, ws, requestID) {
     //update instance with query.id - CANNOT UPDATE THE ID OF AN INSTANCE
-    collection.findOneAndUpdate(query.id, query, function (err) {
+    collection.findOneAndUpdate({id: query.id}, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws, requestID);
         broadcastToClients(ws, query);
@@ -118,7 +119,7 @@ function update(collection, query, ws, requestID) {
 
 function remove(collection, query, ws, requestID) {
     //delete first instance that matches query
-    collection.findOneAndDelete(query, function (err) {
+    collection.findOneAndDelete({id: query.id}, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws, requestID);
         broadcastToClients(ws, query);

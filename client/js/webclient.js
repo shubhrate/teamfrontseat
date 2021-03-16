@@ -113,7 +113,6 @@ export function send(msg, callback) {
 		console.error("Socket: attempt to send message while socket closed!");
 		return;
 	}
-	console.log(callback);
 	const id = uniqueID();
 	msg.requestID = id;
 	if(callback) {
