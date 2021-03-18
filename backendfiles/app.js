@@ -171,7 +171,7 @@ function broadcastToClients(ws, query) {
 /** Connection to Vive */
 const MojoClient = require("./MojoClient.js");
 
-var mojoSocketPort = 4030;
+var mojoSocketPort = 9003;
 var WebSocket = require('ws');
 var socketServer = new WebSocket.Server({port:mojoSocketPort});
 var playersMap = new Map();
