@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const properties = require('./properties')
 
 const UserSchema = mongoose.Schema({
     name: {
@@ -17,6 +18,6 @@ const UserSchema = mongoose.Schema({
         type: Array,
         required: false,
     }
-});
+}, properties);
 
 module.exports = mongoose.model('Users', UserSchema);

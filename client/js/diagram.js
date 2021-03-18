@@ -11,7 +11,8 @@ export default class Diagram {
 	 * @param {string} id the id of this diagram's canvas element
 	 * @param {Object[]} [entList] optional initial array of entity data objects
 	 */
-	constructor(canvas, entList) {
+	constructor(id, canvas, entList) {
+		this.id = id;
 		this.canvas = canvas;
 		this.ctx = this.canvas.getContext("2d");
 

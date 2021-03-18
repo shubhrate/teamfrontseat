@@ -30,7 +30,7 @@ function isOpen(ws) {
 function onSendMessage()
 {
   console.log("Send a message");
-  let messg = {type: "post", collection: "users", data: {name: "Jane", password: "password", id: "487434"}};
+  let messg = {type: "getAll", collection: "users", data: {name: "Jane", password: "password", id: "487434"}};
 	let jsonMessg = JSON.stringify( messg );
 	console.log("Sending " + jsonMessg);
   if (!isOpen(webSocket)) {
@@ -50,5 +50,5 @@ function onSocketReceiveMessage(evt)
 
 	// if(messg.type == "get_all" && messg.result == "OK")
 	//  alert( JSON.stringify( messg ) ); 
-  console.log(evt);
+  console.log(evt.data);
 }

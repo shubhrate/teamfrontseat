@@ -2,6 +2,30 @@
 //This might only turn out to be useful for prototyping, but still.
 
 import {pythag} from "./util.js";
+import {queueUpdate} from "./webclient.js";
+
+function updateEntitiesOnServer(entArray) {
+	let entData = [];
+	for(const e of entArray) {
+		entData.push(e.data);
+	}
+	queueUpdate("entities", ...entData);
+}
+
+function updateEntityPropertiesOnServer(entArray, propArray) {
+	let entData = [];
+	for (const ent of entArray) {
+		const dataObj = {
+			"id": ent.data.id,
+			"diagramID": ent.data.diagramID
+		};
+		for (const prop of propArray) {
+			dataObj[prop] = ent.data[prop];
+		}
+		entData.push(dataObj);
+	}
+	queueUpdate("entities", ...entData);
+}
 
 export default class InputManager {
 	/**
@@ -59,6 +83,7 @@ export default class InputManager {
 			for(const f of focus) {
 				f.angle = f.angle + (delta * Math.PI * 0.02) % (Math.PI * 2);
 			}
+			updateEntityPropertiesOnServer(focus, ["angle"]);
 		} else { //Scroll wheel is zooming the viewport
 			const newScale = Math.max(this.diagram.scale - delta, 1);
 			const dimScale = this.diagram.scale / newScale;
@@ -93,6 +118,7 @@ export default class InputManager {
 					s.posX += e.movementX / this.diagram.scale;
 					s.posY += e.movementY / this.diagram.scale;
 				}
+				updateEntityPropertiesOnServer(this.selectedEntities, ["posX", "posY"]);
 			} else { //Mouse is dragging the viewport
 				this.diagram.windowX += e.movementX / this.diagram.scale;
 				this.diagram.windowY += e.movementY / this.diagram.scale;

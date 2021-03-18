@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+const properties = require('./properties');
 
 const DiagramSchema = mongoose.Schema({
-    diagramID: {
+    id: {
         type: String,
         required: true
     },
@@ -9,6 +10,6 @@ const DiagramSchema = mongoose.Schema({
         type: Array,
         required: false
     },
-});
+}, properties);
 
 module.exports = mongoose.model('Diagrams', DiagramSchema);
