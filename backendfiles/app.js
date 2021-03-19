@@ -77,9 +77,11 @@ app.ws('/', function(ws, req) {
                 " with Mojo server on port#" + msg.data.mojoPort +
                 " at IP address: " + msg.data.mojoIpAddress);
             if (msg.data.id != undefined) {
+                //Because current tracker version probably doesn't set this property, hardcode default
+                const diagramID = msg.data.diagramID || "1";
                 // Construct a player object, can omit color attribute.
                 let player = {
-                    id: msg.data.id, x: 3, y: 3, angle: 0,
+                    id: msg.data.id, diagramID, x: 3, y: 3, angle: 0,
                     mojoPort: msg.data.mojoPort,
                     mojoIpAddress: msg.data.mojoIpAddress
                 };
@@ -160,10 +162,10 @@ function update(collection, query, ws, requestID) {
     collection.findOneAndUpdate({id}, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws, requestID);
-        if(isEntity) broadcastToClients(ws, {
+        if(isEntity) broadcastToClients({
             type: "entity_update",
             data: query
-        });
+        }, ws);
     });
 }
 
@@ -172,7 +174,7 @@ function remove(collection, query, ws, requestID) {
     collection.findOneAndDelete({id: query.id}, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws, requestID);
-        broadcastToClients(ws, query);
+        broadcastToClients(query, ws);
     });
 }
 
@@ -182,7 +184,7 @@ function createInstance(collection, data, ws, requestID) {
     instance.save(function (err) {
         if (err) console.log(err);
         respondToSocket({added: true}, ws, requestID);
-        broadcastToClients(ws, data);
+        broadcastToClients(data, ws);
     });
 }
 
@@ -198,10 +200,10 @@ function respondToSocket(msg, ws, requestID) {
     ws.send(finalResponse);
 }
 
-function broadcastToClients(ws, query) {
-    const msg = JSON.stringify(query);
+function broadcastToClients(msgObj, ignoreSocket) {
+    const msg = JSON.stringify(msgObj);
     for (const client of clients) {
-        if (client !== ws) {
+        if (client !== ignoreSocket) {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(msg);
             } else {
@@ -338,19 +340,28 @@ function onMojoData(data) {
 			player.x = x;
 			player.y = y;
 			player.angle = rigidBody.rot.y; // rotation angle in degrees.
+
+            broadcastToClients({
+                type: "entity_update",
+                data: {
+                    id: player.id,
+                    diagramID: player.diagramID,
+                    posX: player.x,
+                    posY: player.y,
+                    angle: player.angle
+                }
+            });
 		} // end if player is defined.
 	}
 }
 
-function startMojoServers()
-{
+function startMojoServers() {
 	let mojoClientsList = Array.from( mojoClientsMap.values() );	
 	for(let i = 0; i < mojoClientsList.length; i++)
 		mojoClientsList[i].sendMessageBroadcast(true);
 }
 
-function pauseMojoServers()
-{
+function pauseMojoServers() {
 	let mojoClientsList = Array.from( mojoClientsMap.values() );	
 	for(let i = 0; i < mojoClientsList.length; i++)
 		mojoClientsList[i].sendMessageBroadcast(false);
