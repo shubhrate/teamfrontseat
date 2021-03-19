@@ -67,6 +67,7 @@ const testData = [
 //TODO / NOTE: diagramID will likely be in uniqueID format later
 
 client.open(address, () => {
+    console.log("Sending SOcket Message 1");
     client.send({
         type: "getAll",
         collection: "entities",
@@ -82,10 +83,24 @@ client.open(address, () => {
         diagram.windowY = diagram.height / diagram.scale / 2;
 
         new InputManager(diagram);
-
+        console.log("Prior to redrawing the diagram");
         diagram.draw();
+
     });
+    //client.send();
+    let player = {
+        type: "new player",
+        //id: "Jane Doe",
+        collection: "users",
+        data: { name: "Jane", mojoPort: 9003, mojoIpAddress: "localHost", id: "178376c1f97-f0fa6018"},
+    };
+    //client.send("Sending SOcket Message 2");
+    client.send(player);
 });
+
+//const makeViveConnection() {
+//    
+//}
 
 /*
 const animator = new Animator(diagram);
