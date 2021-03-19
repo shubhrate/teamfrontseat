@@ -140,7 +140,7 @@ function getOne(collection, query, ws, requestID) {
     //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
     collection.findOne(query, function (err, result) {
         if (err) return handleError(err);
-        console.log(err, result);
+        if(err) console.log(err);
         //callback function accesses ws via closure
         respondToSocket({result}, ws, requestID);
     });
@@ -149,7 +149,7 @@ function getOne(collection, query, ws, requestID) {
 function getAll(collection, query, ws, requestID) {
     //finds all instances that match the query
     collection.find(query, function (err, result) {
-        console.log(err, result);
+        if(err) console.log(err);
         if (err) return handleError(err);
         respondToSocket({result}, ws, requestID);
     });
