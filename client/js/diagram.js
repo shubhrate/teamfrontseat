@@ -20,6 +20,7 @@ export default class Diagram {
 		this._windowX = 0;
 		this._windowY = 0;
 		this._scale = 100; //scale factor: px/unit
+		this.container = null;
 
 		this.visibilities = {
 			grid: true,
@@ -48,9 +49,21 @@ export default class Diagram {
 		this.manageResize();
 	}
 
-	//TODO: this function.
+	resizeToFill(container) {
+		if(container instanceof HTMLElement) this.container = container;
+		if(this.container) {
+			this.canvas.width = this.container.clientWidth;
+			this.canvas.height = this.container.clientHeight;
+		} else {
+			this.canvas.width = window.innerWidth;
+			this.canvas.height = window.innerHeight;
+		}
+		this.manageResize();
+	}
+
+	//TODO: this function. (?)
 	manageResize() {
-		
+		this.draw();
 	}
 
 	//Setters for viewport position and scale

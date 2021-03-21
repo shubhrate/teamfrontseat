@@ -128,7 +128,7 @@ export function send(msg, callback) {
 //FUNCTIONS MANAGING UPDATE QUEUE, FOR RATE LIMITING
 
 //Minimum time (in ms) between update broadcasts
-const UPDATE_BLOCK_TIME = 250;
+const UPDATE_INTERVAL = 250;
 let blockUpdates = false;
 let pendingUpdates = {};
 /* pendingUpdates is a two-layer object storing collections
@@ -153,7 +153,7 @@ function unblockUpdatesAndSend() {
 			sendUpdates(c, Object.values(o));
 			delete pendingUpdates[c];
 		}
-		window.setTimeout(unblockUpdatesAndSend, UPDATE_BLOCK_TIME);
+		window.setTimeout(unblockUpdatesAndSend, UPDATE_INTERVAL);
 	} else {
 		blockUpdates = false;
 	}
@@ -168,7 +168,7 @@ function sendUpdates(collection, objArray) {
 
 /**
  * Registers data to be changed on the server via an update request.
- * Applies rate limiting: requests are only sent every UPDATE_BLOCK_TIME seconds
+ * Applies rate limiting: requests are only sent every UPDATE_INTERVAL seconds
  * @param {string} collection the server collection to update
  * @param  {...object} objects object data to update
  */
@@ -184,6 +184,6 @@ export function queueUpdate(collection, ...objects) {
 	} else {
 		sendUpdates(collection, objects);
 		blockUpdates = true;
-		window.setTimeout(unblockUpdatesAndSend, UPDATE_BLOCK_TIME);
+		window.setTimeout(unblockUpdatesAndSend, UPDATE_INTERVAL);
 	}
 }

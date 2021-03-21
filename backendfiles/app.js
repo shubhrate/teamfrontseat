@@ -30,10 +30,10 @@ app.use(function (req, res, next) {
     return next();
 });
 
-app.ws('/', function(ws, req) {
+app.ws('/', function (ws, req) {
+    console.log("Client connected.");
     clients.push(ws);
     ws.on('message', function(msgStr) {
-        console.log("Client connected.");
 
         //log message from client
         console.log(msgStr);
