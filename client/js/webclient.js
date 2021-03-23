@@ -36,20 +36,23 @@ const requestTypes = {
 	},
 	/*
 	Update one or more properties of one entity
-	DATA: entity id and the attributes to be updated, in a flat object.
+	DATA: entity/diagram id and the attributes to be updated, in a flat object.
 	*/
 	"entity_update": function(data) {
-		console.log(data);
 		const diagram = diagrams[data.diagramID];
 		const entity = diagram.getEntityById(data.id);
+		delete data.diagramID;
 		delete data.id;
-		//With id out of the way, we drop other properties into the entity
+		//With ids out of the way, we drop other properties into the entity
 		for(const p in data) { //Notice: "in," not "of." They're different.
 			if (entity.__lookupSetter__(p)) {
 				entity[p] = data[p];
 			} else {
 				entity.data[p] = data[p];
 			}
+		}
+		if(data.hasController) {
+			diagram.attachments.inputManager.deselectEntity(entity);
 		}
 		diagram.draw();
 	}
@@ -96,7 +99,7 @@ export function open(url, openCallback, errorCallback) {
 			if(errorCallback) errorCallback();
 		}
 		socket.onclose = function() {
-
+			//TODO: was I gonna put something here?
 		}
 		socket.onmessage = onWSMessage;
 		isOpen = true;
@@ -110,6 +113,12 @@ export function close() {
 	}
 }
 
+/**
+ * Send a WebSocket message to the server.
+ * @param {Object} msg the message to send to the server
+ * @param {Function} [callback] callback to run when the response is received
+ * @returns 
+ */
 export function send(msg, callback) {
 	if(!isOpen) {
 		console.error("Socket: attempt to send message while socket closed!");

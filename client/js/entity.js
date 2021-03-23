@@ -21,7 +21,7 @@ class Entity {
 		this.data = data;
 
 		this.selected = false;
-		this.hasController = false;
+		this._hasController = false;
 
 		this.moved = false; //Flag for Diagram to update screen position
 
@@ -36,6 +36,7 @@ class Entity {
 	get posY() {return this.data.posY;}
 	get size() {return this.data.size;}
 	get angle() {return this.data.angle;}
+	get hasController() {return this._hasController;}
 	set posX(val) {
 		this.data.posX = val;
 		this.moved = true;
@@ -51,10 +52,15 @@ class Entity {
 	set angle(val) {
 		this.data.angle = val;
 	} //Angle doesn't set this.moved because viewport doesn't rotate. (yet?)
+	set hasController(val) {
+		this._hasController = val;
+		this.moved = true;
+	}
 
-	moveTo(x, y) {
+	moveTo(x, y, angle = this.angle) {
 		this.posX = x;
 		this.posY = y;
+		this.angle = angle;
 	}
 }
 

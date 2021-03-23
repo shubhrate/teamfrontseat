@@ -53,7 +53,8 @@ app.ws('/', function (ws, req) {
         const collectionMap = {
             'users': User,
             'entities': Entity,
-            'diagrams': Diagram
+            'diagrams': Diagram,
+            'none': null
         };
 
         const requestTypes = {
