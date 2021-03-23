@@ -126,7 +126,7 @@ export default class InputManager {
 		if(this.controlledEntity === ent) {
 			ent.hasController = false;
 			this.controlledEntity = null;
-			msg.type = "detatchController";
+			msg.type = "detachController";
 		} else if(!ent.hasController) {
 			ent.hasController = true;
 			if(this.controlledEntity)
