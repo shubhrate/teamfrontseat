@@ -44,10 +44,10 @@ const EntityDraw = {
 		ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
 		ctx.fill();
 
-		//Draw more circle if selected or controlled
+		//Draw outline if selected or controlled
 		if (ent.selected || ent.hasController) {
 			ctx.lineWidth = 2.5;
-			ctx.strokeStyle = ent.hasController ? CONTROL_COLOR : SELECT_COLOR;
+			ctx.strokeStyle = ent.hasController ? CONTROLLED_COLOR : SELECT_COLOR;
 			ctx.beginPath();
 			ctx.arc(ent.screenX, ent.screenY, ent.screenSize / 2, 0, 2 * Math.PI);
 			ctx.stroke();

@@ -29,13 +29,14 @@ print(sizeOfWidth)
 
 async def server(websocket, path):
     if interval:
+        
         while(True):
             start = time.time()
             count = 0
             txt_json = {
                 'time' : start,
                 'channels' : [
-                      {'id' : 0, 'pos' : {}, 'rot' : {}}  
+                      {'id' : '178376c1f97-f0fa6018', 'pos' : {}, 'rot' : {}}  
                 ]
             }
             for each in v.devices["tracker_1"].get_pose_euler():
