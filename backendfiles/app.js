@@ -1,3 +1,9 @@
+/** 
+ * Sources:
+ * https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose
+ * https://www.npmjs.com/package/express-ws 
+*/
+
 /** Connection to database */
 const mongoose = require('mongoose');
 
@@ -15,6 +21,19 @@ mongoose.connect(
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
+/** Connection to Vive */
+const MojoClient = require("./MojoClient.js");
+
+var mojoSocketPort = 9003;
+var WebSocket = require('ws');
+var socketServer = new WebSocket.Server({ port: mojoSocketPort });
+
+var playersMap = new Map();
+var playersMapUpdateInterval = undefined;
+var mojoClientsMap = new Map();
+
+playersMapUpdateInterval = setInterval(broadcastMap, 1000 / 30);
 
 /** Connection to client */
 const express = require('express');
@@ -62,66 +81,25 @@ app.ws('/', function (ws, req) {
             getAll,
             update,
             remove,
-            createInstance
+            createInstance,
+            newPlayer,
+            pauseLiveMotion,
+            startLiveMotion,
+            quitPlayer
         };
 
         var collection = collectionMap[msg.collection];
         if(!collection) {
             throw new Error("Invalid message collection: " + msg.collection);
         }
-        // Added this in --------------------------------------->
-        // add in more if else statements 
-        // if the message is a vive message
-        
-        if (msg.type == "new player") {
-            console.log("create new player: " + msg.data.id +
-                " with Mojo server on port#" + msg.data.mojoPort +
-                " at IP address: " + msg.data.mojoIpAddress);
-            if (msg.data.id != undefined) {
-                //Because current tracker version probably doesn't set this property, hardcode default
-                const diagramID = msg.data.diagramID || "1";
-                // Construct a player object, can omit color attribute.
-                let player = {
-                    id: msg.data.id, diagramID, x: 3, y: 3, angle: 0,
-                    mojoPort: msg.data.mojoPort,
-                    mojoIpAddress: msg.data.mojoIpAddress
-                };
-                playersMap.set(msg.data.id, player);
 
-                // Reply message to confirm success.
-                let messg = {
-                    cmd: "new player", id: msg.data.id,
-                    mojoPort: msg.data.mojoPort, mojoIpAddress: msg.data.mojoIpAddress
-                };
-                // Might need to change this later ----------------------------->
-                //socket.send(JSON.stringify(messg));
-
-                // New player request will specify the port number and remote WebSocket URI
-                // of each player's motion-tracker server.
-                // This central server will use a MojoClient to manage each remote motion data stream.
-                let mojoClient = createMojoClient(msg.data.mojoPort, msg.data.mojoIpAddress);
-                mojoClientsMap.set(msg.data.id, mojoClient);
-            }
-        } else if (msg.type == "pause live motion") {
-            // The director's WebClient says everyone pauses live motion streaming
-            pauseMojoServers();
-        } else if (msg.type == "start live motion") {
-            // The director's WebClient says everyone starts live motion streaming for acting
-            startMojoServers();
-        } else if (msg.type == "quit player") {
-            console.log("quit player: " + msg.id);
-            if (msg.id != undefined) {
-                playersMap.delete(msg.id);
-            }
-            let messg = { type: "quit player", id: msg.id };
-            // socket.send(JSON.stringify(messg));
-        }
-        else if (requestTypes[msg.type]) {
+        if (requestTypes[msg.type]) {
             //command string - invokes a function based on command and collection
             requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
         } else {
             throw new Error("Invalid message type");
         }
+
     });
     console.log('socket', req.testing);
     ws.on('close', (ws) => {
@@ -133,8 +111,6 @@ app.ws('/', function (ws, req) {
 
 //Start Listening to Server:
 app.listen(clientSocketPort);
-
-/* https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose */
 
 function getOne(collection, query, ws, requestID) {
     //finds a single instance that matches the query
@@ -163,10 +139,12 @@ function update(collection, query, ws, requestID) {
     collection.findOneAndUpdate({id}, query, function (err) {
         if (err) console.log(err);
         respondToSocket({updated: true}, ws, requestID);
-        if(isEntity) broadcastToClients({
-            type: "entity_update",
-            data: query
-        }, ws);
+        if (isEntity) {
+            broadcastToClients({
+                type: "entity_update",
+                data: query
+            }, ws);
+        } 
     });
 }
 
@@ -189,9 +167,59 @@ function createInstance(collection, data, ws, requestID) {
     });
 }
 
-/* https://www.npmjs.com/package/express-ws */
+function newPlayer(collection, data, ws, requestID) {
+    console.log("create new player: " + data.id +
+                " with Mojo server on port#" + data.mojoPort +
+                " at IP address: " + data.mojoIpAddress);
+    if (data.id != undefined) {
+        //Because current tracker version probably doesn't set this property, hardcode default
+        const diagramID = data.diagramID || "1";
 
-//TODO: get a better callback structure going than this
+        // Construct a player object, can omit color attribute.
+        let player = {
+            id: data.id, diagramID, x: 3, y: 3, angle: 0,
+            mojoPort: data.mojoPort,
+            mojoIpAddress: data.mojoIpAddress
+        };
+        playersMap.set(data.id, player);
+
+        // Reply message to confirm success.
+        let messg = {
+            cmd: "new player", id: data.id,
+            mojoPort: data.mojoPort, mojoIpAddress: data.mojoIpAddress
+        };
+        
+        respondToSocket(messg, ws, requestID);
+        broadcastToClients(messg, ws);
+
+        // New player request will specify the port number and remote WebSocket URI
+        // of each player's motion-tracker server.
+        // This central server will use a MojoClient to manage each remote motion data stream.
+        let mojoClient = createMojoClient(data.mojoPort, data.mojoIpAddress);
+        mojoClientsMap.set(data.id, mojoClient);
+    }
+}
+
+function pauseLiveMotion(collection, data, ws, requestID) {
+    // The director's WebClient says everyone pauses live motion streaming
+    pauseMojoServers();
+}
+
+function startLiveMotion(collection, data, ws, requestID) {
+    // The director's WebClient says everyone starts live motion streaming for acting
+    startMojoServers();
+}
+
+function quitPlayer(collection, data, ws, requestID) {
+    console.log("quit player: " + data.id);
+    if (data.id != undefined) {
+        playersMap.delete(data.id);
+    }
+    let messg = { type: "quit player", id: data.id };
+    respondToSocket(messg, ws, requestID);
+    broadcastToClients(messg, ws);
+}
+
 function respondToSocket(msg, ws, requestID) {
     if(requestID) {
         msg.requestID = requestID;
@@ -201,10 +229,10 @@ function respondToSocket(msg, ws, requestID) {
     ws.send(finalResponse);
 }
 
-function broadcastToClients(msgObj, ignoreSocket) {
+function broadcastToClients(msgObj, socketToIgnore) {
     const msg = JSON.stringify(msgObj);
     for (const client of clients) {
-        if (client !== ignoreSocket) {
+        if (client !== socketToIgnore) {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(msg);
             } else {
@@ -214,73 +242,6 @@ function broadcastToClients(msgObj, ignoreSocket) {
         }
     }
 }
-
-/** Connection to Vive */
-const MojoClient = require("./MojoClient.js");
-
-var mojoSocketPort = 9003;
-var WebSocket = require('ws');
-var socketServer = new WebSocket.Server({ port: mojoSocketPort });
-if (socketServer == undefined) {
-    
-}
-
-var playersMap = new Map();
-var playersMapUpdateInterval = undefined;
-var mojoClientsMap = new Map();
-
-// Added this in
-//var mojoClient = new MojoClient();
-//mojoClient.connect("9003")
-
-// Had all of this commented out
-/*
-socketServer.on('connection', function (socket) {
-    //mojoClient.connect("9003")
-    console.log("Client connected on vive socket");
-    socket.on('message', function(incomingMessgJason) {
-        let incomingMessg = JSON.parse(incomingMessgJson);
-        console.log(JSON.stringify(incomingMessg));
-        if (incomingMessg.cmd == "new player") {
-            console.log("create new player: " + incmomingMessg.id +
-            " with Mojo server on port#" + incomingMessg.mojoPort +
-            " at IP address: " + incomingMessg.mojoIpAddress);
-            if(incomingMessg.id != undefined) {
-                // Construct a player object, can omit color attribute.
-                let player = { id: incomingMessg.id, x: 300, y: 300, angle: 0,
-                        mojoPort: incomingMessg.mojoPort,
-                        mojoIpAddress: incomingMessg.mojoIpAddress };
-                playersMap.set(incomingMessg.id, player );
-
-                // Reply message to confirm success.
-		        let messg = { cmd: "new player", id: incomingMessg.id,
-                mojoPort: incomingMessg.mojoPort, mojoIpAddress: incomingMessg.mojoIpAddress };
-                socket.send(JSON.stringify(messg));
-
-                // New player request will specify the port number and remote WebSocket URI
-                // of each player's motion-tracker server.
-                // This central server will use a MojoClient to manage each remote motion data stream.
-                let mojoClient = createMojoClient(incomingMessg.mojoPort, incomingMessg.mojoIpAddress);
-                mojoClientsMap.set(incomingMessg.id, mojoClient);
-            }
-        } else if (incomingMessg.cmd == "pause live motion") {
-			// The director's WebClient says everyone pauses live motion streaming
-			pauseMojoServers();
-		} else if (incomingMessg.cmd == "start live motion") {
-			// The director's WebClient says everyone starts live motion streaming for acting
-			startMojoServers();
-		} else if (incomingMessg.cmd == "quit player") {
-			console.log("quit player: " + incomingMessg.id);
-			if (incomingMessg.id != undefined) {
-				playersMap.delete(incomingMessg.id);
-			}
-		  let messg = { cmd: "quit player", id: incomingMessg.id };
-		  socket.send(JSON.stringify(messg));
-		}
-    });
-}); */
-
-playersMapUpdateInterval = setInterval(broadcastMap, 1000 / 30);
 
 function broadcastMap() {
     let playerList = Array.from(playersMap.values());
@@ -294,7 +255,6 @@ function broadcastMap() {
 	    if (client.readyState == WebSocket.OPEN)
 			client.send(jsonMessg);
     }
-    //console.log(jsonMessg);
 }
 
 /* Create a MojoClient to manage and receive incoming motion tracker server data
@@ -318,7 +278,7 @@ function createMojoClient(portNumber, ipAddress) {
 function onMojoData(data) {
     // Sample incoming JSON message from a remote user's Vive tracker server.
     // { "time": 32.1,
-    //   "channels":[{"id": "Jane" ,"pos": {"x":0.1, "y":0,"z":2.3},
+    //   "channels":[{"id": "384327" ,"pos": {"x":0.1, "y":0,"z":2.3},
     //             "rot":{"x":0, "y": 45, "z":0}}]}
     let timeStamp = data.time;
     // We expect each remote site to send data for only one moving performer.
