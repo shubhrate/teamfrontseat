@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const properties = require('./properties');
 
+// Mongoose Schema for Entity MongoDB collection
+// An entity could be a character on the diagram or a prop / set piece
 const EntitySchema = mongoose.Schema({
     id: {
         type: String,

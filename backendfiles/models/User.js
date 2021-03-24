@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const properties = require('./properties')
 
+// Mongoose Schema for Entity MongoDB collection
+// For future implementation of user authentication
 const UserSchema = mongoose.Schema({
     name: {
         type: String,
