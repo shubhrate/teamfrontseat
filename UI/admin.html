@@ -1,0 +1,31 @@
+<script>
+
+function verifyPassword() {
+  var password = document.getElementById("adminPassword").value;
+  //check empty password field
+  if(password == "") {
+     document.getElementById("message").innerHTML = "Enter admin password";
+     return false;
+  }
+  //check for correct universal password - should add password to .env file later to make this more secure
+  else if(password == "whitmantheater") {
+    //redirect to the admin toolbar
+    window.location.href="/edit.html"  
+  }
+  //otherwise password error
+  else {
+     document.getElementById("message").innerHTML = "Password incorrect";
+     return false;
+  }
+  return false;
+}
+</script>
+
+<center>
+    <form onsubmit ="return verifyPassword()">
+        <td> Enter Password </td>
+        <input type = "password" id = "adminPassword" value = "">
+        <input type = "submit" value = "Submit"> <br><br>
+        <span id = "message" style="color:red"> </span>
+    </form>
+</center>
