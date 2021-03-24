@@ -1,5 +1,6 @@
 <script>
 
+// simple password checker
 function verifyPassword() {
   var password = document.getElementById("adminPassword").value;
   //check empty password field
@@ -20,7 +21,7 @@ function verifyPassword() {
   return false;
 }
 </script>
-
+<!--Set up for the password widget -->
 <center>
     <form onsubmit ="return verifyPassword()">
         <td> Enter Password </td>
