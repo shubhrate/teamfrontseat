@@ -2,15 +2,7 @@
 //This might only turn out to be useful for prototyping, but still.
 
 import {pythag} from "./util.js";
-import {queueUpdate} from "./webclient.js";
-
-function updateEntitiesOnServer(entArray) {
-	let entData = [];
-	for(const e of entArray) {
-		entData.push(e.data);
-	}
-	queueUpdate("entities", ...entData);
-}
+import {queueUpdate, send} from "./webclient.js";
 
 function updateEntityPropertiesOnServer(entArray, propArray) {
 	let entData = [];
@@ -34,13 +26,25 @@ export default class InputManager {
 	 */
 	constructor(diagram) {
 		this.diagram = diagram;
+		diagram.attach("inputManager", this);
 		this.scrollSpeed = 0.05;
 		this.selectedEntities = [];
+		this.controlledEntity = null;
 
-		//Arrow functions mean "this" is this object, not the event.
-		this.diagram.canvas.addEventListener("wheel", (e) => this.onWheel(e));
-		this.diagram.canvas.addEventListener("mousedown", (e) => this.onMouseDown(e));
-		this.diagram.canvas.addEventListener("mousemove", (e) => this.onMouseMove(e));
+		this.diagram.canvas.addEventListener(
+			"wheel",
+			(e) => this.onWheel(e)
+		);
+		this.diagram.canvas.addEventListener(
+			"mousedown",
+			(e) => this.onMouseDown(e)
+		);
+		this.diagram.canvas.addEventListener(
+			"mousemove",
+			(e) => this.onMouseMove(e)
+		);
+		//Prevent context menu showing up on right-click
+		this.diagram.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 	}
 
 	/**
@@ -49,11 +53,11 @@ export default class InputManager {
 	 * @param ev the mouse event.
 	 * @returns {Object[]} an array of entities under the mouse.
 	 */
-	focusEntity(ev) {
+	getFocusedEntities(ev) {
 		let eList = [];
 		for(const ent of this.diagram.entities) {
 			const dist = pythag(ent.screenX - ev.offsetX, ent.screenY - ev.offsetY);
-			if(dist < ent.size * this.diagram.scale / 2 && !ent.hasController) {
+			if(dist < ent.size * this.diagram.scale / 2) {
 				eList.push(ent);
 			}
 		}
@@ -61,14 +65,74 @@ export default class InputManager {
 	}
 
 	/**
-	 * Selects or deselects a list of entities
-	 * @param ents the entities to be changed
-	 * @param select true or omitted if selecting; false if deselecting
+	 * Selects one or more entities
+	 * @param {...Object} ents the entity/entities to select
 	 */
-	static selectEntities(ents, select = true) {
+	selectEntity(...ents) {
 		for(const s of ents) {
-			s.selected = select;
+			if(!s.hasController) {
+				s.selected = true;
+				if (!this.selectedEntities.includes(s)) {
+					this.selectedEntities.push(s);
+				}
+			}
 		}
+	}
+
+	/**
+	 * Deselects one or more entities
+	 * @param  {...Object} ents the entity/entities to deselect
+	 */
+	deselectEntity(...ents) {
+		for(const s of ents) {
+			s.selected = false;
+			const selectIndex = this.selectedEntities.indexOf(s);
+			if(selectIndex >= 0) {
+				this.selectedEntities.splice(selectIndex, 1);
+			}
+		}
+	}
+
+	/**
+	 * Deselects all entities
+	 */
+	deselectAll() {
+		for(const s of this.selectedEntities) {
+			s.selected = false;
+		}
+		this.selectedEntities = [];
+	}
+
+	/**
+	 * Sets/unsets which entity is controlled by the local controller
+	 * @param {Object} ent the entity to update
+	 */
+	setControlledEntity(ent) {
+		let msg = {
+			"collection": "none",
+			"data": {
+				"id": ent.id,
+				"diagramID": ent.diagramID,
+			}
+		};
+		if(this.controlledEntity === ent) {
+			ent.hasController = false;
+			this.controlledEntity = null;
+			msg.type = "detachController";
+		} else if(!ent.hasController) {
+			ent.hasController = true;
+			if(this.controlledEntity)
+				this.controlledEntity.hasController = false;
+			this.controlledEntity = ent;
+			this.deselectEntity(ent);
+			msg.type = "attachController";
+			Object.assign(msg.data, {
+				"posX": ent.posX,
+				"posY": ent.posY,
+				"angle": ent.angle
+			});
+		} else return;
+		//send(msg);
 	}
 
 	///////////////////////////////////
@@ -76,12 +140,14 @@ export default class InputManager {
 
 	onWheel(e) {
 		e.preventDefault();
-		const focus = this.selectedEntities.length > 0 ? this.selectedEntities : this.focusEntity(e);
+		const focus = this.selectedEntities.length > 0 ? this.selectedEntities : this.getFocusedEntities(e);
 		const delta = e.deltaY * this.scrollSpeed;
 
 		if(focus.length > 0) { //Scroll wheel is rotating entities
 			for(const f of focus) {
-				f.angle = f.angle + (delta * Math.PI * 0.02) % (Math.PI * 2);
+				if(!f.hasController) {
+					f.angle = f.angle + (delta * Math.PI * 0.02) % (Math.PI * 2);
+				}
 			}
 			updateEntityPropertiesOnServer(focus, ["angle"]);
 		} else { //Scroll wheel is zooming the viewport
@@ -95,18 +161,21 @@ export default class InputManager {
 	}
 
 	onMouseDown(e) {
-		let focus = this.focusEntity(e);
+		let focus = this.getFocusedEntities(e);
 
-		if(focus.length > 0) { //Click selects an entity
-			InputManager.selectEntities(focus);
-			for(const f of focus) {
-				if(!this.selectedEntities.includes(f)) {
-					this.selectedEntities.push(f);
-				}
+		if(e.button == 0) { //Left-click
+			let focusHasSelectedEnt = false;
+			for(const {selected} of focus) {
+				focusHasSelectedEnt = focusHasSelectedEnt || selected;
 			}
-		} else { //Click deselects all entities
-			InputManager.selectEntities(this.selectedEntities, false);
-			this.selectedEntities = [];
+			if(!e.ctrlKey && !focusHasSelectedEnt) {
+				this.deselectAll();
+			}
+			if(focus.length > 0) {
+				this.selectEntity(...focus);
+			}
+		} else if(e.button == 2) { //Right-click
+			if(focus.length == 1) this.setControlledEntity(focus[0]);
 		}
 		this.diagram.draw();
 	}

@@ -15,12 +15,12 @@ export default class Diagram {
 		this.id = id;
 		this.canvas = canvas;
 		this.ctx = this.canvas.getContext("2d");
-		this.container = null; //Containing element to fill
 
 		//Position & scale of viewport
 		this._windowX = 0;
 		this._windowY = 0;
 		this._scale = 100; //scale factor: px/unit
+		this.container = null;
 
 		this.visibilities = {
 			grid: true,
@@ -28,22 +28,10 @@ export default class Diagram {
 			entities: true
 		};
 
-		//Map to classes which have control over diagram
-		this.attachments = {};
-
 		this.entities = [];
 		if (entList !== undefined) {
 			this.addUnclassifiedEntity(...entList);
 		}
-	}
-
-	/**
-	 * Declares a class that has control over this diagram
-	 * @param {string} type the class type of the object
-	 * @param {Object} obj the object to attach
-	 */
-	attach(type, obj) {
-		this.attachments[type] = obj;
 	}
 
 	///////////////////////////////////
@@ -61,11 +49,6 @@ export default class Diagram {
 		this.manageResize();
 	}
 
-	/**
-	 * Reset the diagram canvas size to fit its container, or the browser window
-	 * if no container is defined.
-	 * @param {HTMLElement} [container] set a new container.
-	 */
 	resizeToFill(container) {
 		if(container instanceof HTMLElement) this.container = container;
 		if(this.container) {
@@ -119,6 +102,9 @@ export default class Diagram {
 		}
 	}
 
+	//TODO: this method assumes that one day entities will be assigned
+	//unique IDs, probably UUIDs. Because JavaScript has no integrated UUID
+	//generator, I put this off. Finish this.
 	/**
 	 * Gets an entity... by its ID.
 	 * @param id the id of the entity to get
@@ -127,6 +113,7 @@ export default class Diagram {
 		for(const e of this.entities) {
 			if(e.data.id === id) return e;
 		}
+		return false;
 	}
 		
 	/**

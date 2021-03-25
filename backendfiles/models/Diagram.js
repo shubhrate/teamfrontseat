@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 const properties = require('./properties');
 
+// Mongoose Schema for Diagram MongoDB collection
 const DiagramSchema = mongoose.Schema({
-    id: {
+    id: { // useful for checking which diagram a user wants to connect to / update (which play rehearsal)
         type: String,
         required: true
     },
-    entities: {
+    entities: { // array of entity ids
         type: Array,
         required: false
     },

@@ -3,15 +3,16 @@ import InputManager from "./js/inputmanager.js";
 import Animator from "./js/animator.js";
 import * as client from "./js/webclient.js";
 
-import {address} from "./js/_addr.js";
+import address from "./js/_addr.js";
 
 //SET UP DIAGRAM///////////////////////////////////////////
 
 const canvas = document.getElementById("diagram");
+const canvasContainer = document.getElementById("canvas-container");
 const diagram = new Diagram("1", canvas);
 //TODO / NOTE: diagramID will likely be in uniqueID format later
 client.registerDiagram(diagram);
-diagram.resizeToFill();
+diagram.resizeToFill(canvasContainer);
 diagram.windowX = diagram.width / diagram.scale / 2;
 diagram.windowY = diagram.height / diagram.scale / 2;
 

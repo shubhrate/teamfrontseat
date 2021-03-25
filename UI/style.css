@@ -1,0 +1,69 @@
+/* UI styling, font choices, and sizing */
+body {
+  margin: 0;
+  font-family: Lato, sans-serif;
+  font-weight: 300;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header {
+  padding-left:16px;
+  display: table;
+}
+
+#title, #nav {
+  display: table-cell;
+  overflow: hidden;
+  word-wrap: none;
+}
+
+#title {
+  font-size: 20px;
+  max-width: 380px;
+  padding: 16px 12px;
+  min-width: 200px;
+}
+
+#nav {
+  text-align: right;
+  vertical-align: middle;
+  padding: 12px 0px;
+  width: 100%;
+}
+
+#nav > ul {
+  margin: 0;
+  padding: 0;
+}
+
+#nav > ul > li {
+  display: inline-block;
+  padding: 2px 12px;
+}
+
+#searchicon {
+  height: 20px;
+  width: 20px;
+}
+
+section {
+  display: block;
+}
+
+.bigtitle {
+  font-size: 40px;
+  font-weight: 400;
+  padding: 0px 48px;
+  margin: 0px 8.33%;
+}
+
+#canvas-container {
+  display: flex;
+  height: 90%;
+}
+
+a {
+  text-decoration: inherit;
+  color: inherit;
+}

@@ -4,9 +4,11 @@ Renders a virtual stage; allows actors, props, and other entities to be moved ar
 
 ## Setup
 
-This project uses Webpack now! Run `npm install` to resolve dependencies (currently only Webpack itself), then run `npm run build` to build the code. Once you've done that, open build/index.html to test it out.
+First, specify an IP address for the frontseat server. To ensure that IPs are kept off the repository, the server IP is defined in the .gitignored file /js/_addr.js. Create this file, then add the line `export const address = "ws://<address>:3000";`, where `<address>` is the IP address of the server (if you're running the server on your local machine, this should just be `localhost`).
 
-Before Webpack, this code ran into browser policy errors: apparently browsers don't like it when you try to make certain requests for external files while running a site locally, even if those files are also on your local machine. Because Webpack now crunches the module dependency tree that used to cause these problems into a single file, this should no longer be an issue. However, there's a chance you'll encounter similar problems again when adding and testing a feature, like client-server interaction. So, if you encounter trouble and the browser console says it has something to do with "CORS," the solution is to host the code on an http server. For testing on Windows I navigated a command line to the folder and ran `py -m http.server`. Then point a browser tab at localhost:8000 and things ought to work again.
+Client-side JavaScript is built by Webpack. Run `npm install` to install Webpack and other dependencies, then run `npm run build` to build the code. The resulting file will be put in the /build directory, along with the site HTML files. Once the code is built, open /build/index.html in your browser of choice to mess with the client.
+
+Note that `npm run build` produces a more debuggable but less minified development file. To build a smaller production file, run `npm run build-min`.
 
 ## The files
 
@@ -22,9 +24,7 @@ Before Webpack, this code ran into browser policy errors: apparently browsers do
 
 [inputmanager.js](js/inputmanager.js) attaches to Diagram and takes in mouse events so you can move things around with the mouse and scroll wheel/two finger touch.
 
-[animator.js](js/animator.js) provides a framework for animating objects on the diagram.
-
-timeline.js *future* connects to an animator and stores and manages a timeline of blocking actions.
+[animator.js](js/animator.js) provides a framework for animating objects on the diagram. It's currently in need of a rewrite.
 
 #### Messaging
 
