@@ -24,6 +24,12 @@ const expressWs = require('express-ws')(app);
 var clientSocketPort = 3000;
 var clients = [];
 
+let player = {
+    id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
+    mojoPort: 9003,
+    mojoIpAddress: 'localhost'
+};
+
 app.use(function (req, res, next) {
     console.log('middleware');
     req.testing = 'testing';
@@ -33,6 +39,11 @@ app.use(function (req, res, next) {
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
+    // Might need to change this
+    viveClient = createMojoClient(9003, "localhost");
+    mojoClientsMap.set(player.id, viveClient);
+
+    
     ws.on('message', function(msgStr) {
 
         //log message from client
@@ -69,9 +80,7 @@ app.ws('/', function (ws, req) {
             throw new Error("Invalid message collection: " + msg.collection);
         }
         // Added this in --------------------------------------->
-        // add in more if else statements 
-        // if the message is a vive message
-        
+        //console.log("test");
         if (msg.type == "new player") {
             console.log("create new player: " + msg.data.id +
                 " with Mojo server on port#" + msg.data.mojoPort +
@@ -216,7 +225,7 @@ function broadcastToClients(msgObj, ignoreSocket) {
 
 /** Connection to Vive */
 const MojoClient = require("./MojoClient.js");
-
+console.log("test");
 var mojoSocketPort = 9003;
 var WebSocket = require('ws');
 var socketServer = new WebSocket.Server({ port: mojoSocketPort });
@@ -225,8 +234,12 @@ if (socketServer == undefined) {
 }
 
 var playersMap = new Map();
+
+
 var playersMapUpdateInterval = undefined;
 var mojoClientsMap = new Map();
+
+playersMap.set(player.id, player);
 
 // Added this in
 //var mojoClient = new MojoClient();
@@ -319,7 +332,9 @@ function onMojoData(data) {
     // { "time": 32.1,
     //   "channels":[{"id": "Jane" ,"pos": {"x":0.1, "y":0,"z":2.3},
     //             "rot":{"x":0, "y": 45, "z":0}}]}
+    //console.log("Data Revieved!");
     let timeStamp = data.time;
+    
     // We expect each remote site to send data for only one moving performer.
     for (let c = 0; c < data.channels.length; c++) {
 		let rigidBody = data.channels[c];
@@ -330,13 +345,19 @@ function onMojoData(data) {
 			// Each MojoClient motion sensor defines the range of its positional data.
             let mojoClient = mojoClientsMap.get(player.id);
 			let bounds = mojoClient.serverState.bounds;
-		
+            let minX = -2;
+            let maxX = 2;
+            let minZ = -2;
+            let maxZ = 2;
+            
 			// Convert rigid body position from sensor device coordinates to 
 			// current play stage dimensions.
 			
 			// For this unit test demo, we assume stage is canvas of size 800 x 600
-			let x = ((rigidBody.pos.x - bounds.minX)/(bounds.maxX - bounds.minX)) * 3;
-			let y = ((rigidBody.pos.z - bounds.minZ)/(bounds.maxZ - bounds.minZ)) * 3;			
+			//let x = ((rigidBody.pos.x - bounds.minX)/(bounds.maxX - bounds.minX)) * 3;
+            //let y = ((rigidBody.pos.z - bounds.minZ) / (bounds.maxZ - bounds.minZ)) * 3;
+            let x = ((rigidBody.pos.x - minX) / (maxX - minX)) * 10;
+            let y = ((rigidBody.pos.z - minZ) / (maxZ - minZ)) * 10;
 			player.x = x;
 			player.y = y;
 			player.angle = rigidBody.rot.y; // rotation angle in degrees.
