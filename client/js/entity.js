@@ -8,9 +8,7 @@ screen space.)
 
 Note that no entity knows how to draw itself; this is handled in Diagram, which
 references into EntityDraw. The alternative to this is writing a wide
-inheritance tree of classes to only override a draw function. That sounds
-messy. But if that would actually be the better way to handle draws, I'll
-gladly do that refactor.
+inheritance tree of classes to only override a draw function.
 */
 class Entity {
 	/**

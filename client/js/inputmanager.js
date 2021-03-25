@@ -4,14 +4,6 @@
 import {pythag} from "./util.js";
 import {queueUpdate, send} from "./webclient.js";
 
-function updateEntitiesOnServer(entArray) {
-	let entData = [];
-	for(const e of entArray) {
-		entData.push(e.data);
-	}
-	queueUpdate("entities", ...entData);
-}
-
 function updateEntityPropertiesOnServer(entArray, propArray) {
 	let entData = [];
 	for (const ent of entArray) {

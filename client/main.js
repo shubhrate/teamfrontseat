@@ -3,7 +3,7 @@ import InputManager from "./js/inputmanager.js";
 import Animator from "./js/animator.js";
 import * as client from "./js/webclient.js";
 
-import address from "./js/_addr.js";
+import {address} from "./js/_addr.js";
 
 //SET UP DIAGRAM///////////////////////////////////////////
 

@@ -61,6 +61,11 @@ export default class Diagram {
 		this.manageResize();
 	}
 
+	/**
+	 * Reset the diagram canvas size to fit its container, or the browser window
+	 * if no container is defined.
+	 * @param {HTMLElement} [container] set a new container.
+	 */
 	resizeToFill(container) {
 		if(container instanceof HTMLElement) this.container = container;
 		if(this.container) {
@@ -114,9 +119,6 @@ export default class Diagram {
 		}
 	}
 
-	//TODO: this method assumes that one day entities will be assigned
-	//unique IDs, probably UUIDs. Because JavaScript has no integrated UUID
-	//generator, I put this off. Finish this.
 	/**
 	 * Gets an entity... by its ID.
 	 * @param id the id of the entity to get
@@ -125,7 +127,6 @@ export default class Diagram {
 		for(const e of this.entities) {
 			if(e.data.id === id) return e;
 		}
-		return false;
 	}
 		
 	/**
