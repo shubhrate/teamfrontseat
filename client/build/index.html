@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 
 <html>
-  <script>
-
-  function verifyPlayID() {
-    var playID = document.getElementById("playID").value;
-    //redirect to the user window (currently only one play.. later redirect to correct play)
-    window.location.href="./user.html";
-    return false;
-  }
-  </script>
   <head>
     <title>Frontseat</title>
     <link rel="stylesheet" type="text/css" href="./style.css">
@@ -55,4 +46,12 @@
       </div>
     </div>
   </body>
+  <script>
+    function verifyPlayID() {
+      var playID = document.getElementById("playID").value;
+      //redirect to the user window (currently only one play.. later redirect to correct play)
+      window.location.href = "./user.html";
+      return false;
+    }
+  </script>
 </html>
