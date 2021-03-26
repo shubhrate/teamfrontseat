@@ -6,7 +6,7 @@ import time
 import sys
 import openvr
 import json
-
+import math
 
 v = triad_openvr.triad_openvr()
 
@@ -49,6 +49,7 @@ async def server(websocket, path):
                 if count == 3:
                     txt_json['channels'][0]['rot']['x'] = 0
                 if count == 4:
+                    each = math.radians(each)
                     txt_json['channels'][0]['rot']['y'] = each
                 # For an upright tracker, we want the value in pos 4
                 if count == 5:
