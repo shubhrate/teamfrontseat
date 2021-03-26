@@ -49,6 +49,7 @@ let player = {
     mojoPort: 9003,
     mojoIpAddress: 'localhost'
 };
+//Add Jane Doe to playersMap
 playersMap.set(player.id, player);
 
 app.use(function (req, res, next) {
@@ -56,7 +57,6 @@ app.use(function (req, res, next) {
     req.testing = 'testing';
     return next();
 });
-playersMap.set(player.id, player);
 
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
