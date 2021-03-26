@@ -43,26 +43,28 @@ const expressWs = require('express-ws')(app);
 var clientSocketPort = 3000;
 var clients = [];
 
+//Hardcoding Jane Doe to be the player that gets moved
 let player = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
     mojoPort: 9003,
     mojoIpAddress: 'localhost'
 };
+//Add Jane Doe to playersMap
+playersMap.set(player.id, player);
 
 app.use(function (req, res, next) {
     console.log('middleware');
     req.testing = 'testing';
     return next();
 });
-playersMap.set(player.id, player);
 
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
-    // Might need to change this
-    viveClient = createMojoClient(9003, "localhost");
+
+    // Add Jane Doe to mojo clients map
+    let viveClient = createMojoClient(9003, "localhost");
     mojoClientsMap.set(player.id, viveClient);
-    //console.log(mojoClientsMap);
     
     ws.on('message', function(msgStr) {
 
@@ -278,7 +280,6 @@ function broadcastMap() {
 function createMojoClient(portNumber, ipAddress) {		
     let mojoClient = new MojoClient();
     mojoClient.setDataHandler(onMojoData);
-    console.log("Creating MojoClient");
     
     // MojoClient connect method will construct the WebSocket URI
 	// string of the form: "ws://192.168.10.1:3030", where ipAddress "192.168.10.1"
@@ -299,7 +300,6 @@ function onMojoData(data) {
     // We expect each remote site to send data for only one moving performer.
     for (let c = 0; c < data.channels.length; c++) {
 		let rigidBody = data.channels[c];
-        console.log(rigidBody);
 		// Get moving player object by unique ID provided by incoming motion-tracker server data stream.
 		let player = playersMap.get(rigidBody.id);
         if (player != undefined) {
@@ -335,7 +335,7 @@ function onMojoData(data) {
                     angle: player.angle
                 }
             });
-        } else {// end if player is defined.
+        } else { // end if player is defined.
             console.log("player is undefined");
         }
 	}
