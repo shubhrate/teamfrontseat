@@ -43,11 +43,13 @@ const expressWs = require('express-ws')(app);
 var clientSocketPort = 3000;
 var clients = [];
 
+//Hardcoding Jane Doe to be the player that gets moved
 let player = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
     mojoPort: 9003,
     mojoIpAddress: 'localhost'
 };
+playersMap.set(player.id, player);
 
 app.use(function (req, res, next) {
     console.log('middleware');
@@ -58,10 +60,11 @@ app.use(function (req, res, next) {
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
-    // Might need to change this
+
+    // Add Jane Doe to mojo clients map
     viveClient = createMojoClient(9003, "localhost");
     mojoClientsMap.set(player.id, viveClient);
-
+    console.log(mojoClientsMap);
     
     ws.on('message', function(msgStr) {
 
