@@ -46,7 +46,7 @@ var clients = [];
 //Hardcoding Jane Doe to be the player that gets moved
 let player = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
-    mojoPort: 9003,
+    mojoPort: mojoSocketPort,
     mojoIpAddress: 'localhost'
 };
 //Add Jane Doe to playersMap
@@ -63,7 +63,7 @@ app.ws('/', function (ws, req) {
     clients.push(ws);
 
     // Add Jane Doe to mojo clients map
-    let viveClient = createMojoClient(9003, "localhost");
+    let viveClient = createMojoClient(player.mojoPort, "localhost");
     mojoClientsMap.set(player.id, viveClient);
     
     ws.on('message', function(msgStr) {
