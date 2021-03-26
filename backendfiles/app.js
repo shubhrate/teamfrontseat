@@ -299,7 +299,6 @@ function onMojoData(data) {
     // We expect each remote site to send data for only one moving performer.
     for (let c = 0; c < data.channels.length; c++) {
 		let rigidBody = data.channels[c];
-        console.log("Data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         console.log(rigidBody);
 		// Get moving player object by unique ID provided by incoming motion-tracker server data stream.
 		let player = playersMap.get(rigidBody.id);
@@ -318,8 +317,10 @@ function onMojoData(data) {
             // For this unit test demo, we assume stage is canvas of size 800 x 600
             //let x = ((rigidBody.pos.x - bounds.minX)/(bounds.maxX - bounds.minX)) * 3;
             //let y = ((rigidBody.pos.z - bounds.minZ) / (bounds.maxZ - bounds.minZ)) * 3;
-            let x = ((rigidBody.pos.x - minX) / (maxX - minX)) * 10;
-            let y = ((rigidBody.pos.z - minZ) / (maxZ - minZ)) * 10;
+            //let x = ((rigidBody.pos.x - minX) / (maxX - minX)) * 10;
+            //let y = ((rigidBody.pos.z - minZ) / (maxZ - minZ)) * 10;
+            let x = rigidBody.pos.x * 5;
+            let y = rigidBody.pos.z * 5;
             player.x = x;
             player.y = y;
             player.angle = rigidBody.rot.y; // rotation angle in degrees.
