@@ -1,0 +1,54 @@
+<html>
+	<head>
+		<title>Blocking</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+	</head>
+  <body>
+    <header>
+      <span id="title">Team Frontseat</span>
+      <nav id="nav">
+        <ul>
+          <li>
+            <a href="./index.html">Home</a>
+          </li>
+          <li>
+            <a href="./guide.html">Help</a>
+          </li>
+          <li>
+            <a href="./user.html">User View</a>
+          </li>
+          <li>
+            <a href="./admin.html">Admin View</a>
+          </li>
+    </header>
+      <div>
+        <form onsubmit ="return verifyPassword()">
+            <td> Enter Password </td>
+            <input type="password" id="adminPassword" value="">
+            <input id="button" type="submit" value="Submit"> <br><br>
+            <span id="message" style="color:red"> </span>
+        </form>
+    </div>
+  </body>
+  <script>
+    function verifyPassword() {
+      var password = document.getElementById("adminPassword").value;
+      //check empty password field
+      if (password == "") {
+        document.getElementById("message").innerHTML = "Enter admin password";
+        return false;
+      }
+      //check for correct universal password - should add password to .env file later to make this more secure
+      else if (password == "whitmantheater") {
+        //redirect to the admin toolbar
+        window.location.href = "./edit.html";
+      }
+      //otherwise password error
+      else {
+        document.getElementById("message").innerHTML = "Password incorrect";
+        return false;
+      }
+      return false;
+    }
+  </script>
+</html>
