@@ -9,7 +9,7 @@ import {address} from "./js/_addr.js";
 
 const canvas = document.getElementById("diagram");
 const diagram = new Diagram("1", canvas);
-//TODO / NOTE: diagramID will likely be in uniqueID format later
+//TODO / NOTE: diagramID will likely want to be in uniqueID format later
 client.registerDiagram(diagram);
 diagram.resizeToFill();
 diagram.windowX = diagram.width / diagram.scale / 2;

@@ -4,6 +4,7 @@
 import {pythag} from "./util.js";
 import {queueUpdate, send} from "./webclient.js";
 
+//Should this move to webclient.js?
 function updateEntityPropertiesOnServer(entArray, propArray) {
 	let entData = [];
 	for (const ent of entArray) {
@@ -118,14 +119,14 @@ export default class InputManager {
 		if(this.controlledEntity === ent) {
 			ent.hasController = false;
 			this.controlledEntity = null;
-			msg.type = "detachController";
+			msg.type = "quitPlayer";
 		} else if(!ent.hasController) {
 			ent.hasController = true;
 			if(this.controlledEntity)
 				this.controlledEntity.hasController = false;
 			this.controlledEntity = ent;
 			this.deselectEntity(ent);
-			msg.type = "attachController";
+			msg.type = "newPlayer";
 			Object.assign(msg.data, {
 				"posX": ent.posX,
 				"posY": ent.posY,

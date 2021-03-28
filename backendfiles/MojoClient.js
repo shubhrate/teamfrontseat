@@ -15,7 +15,7 @@ const WebSocket = require('ws');
 class MojoClient
 {
 	constructor() {
-		console.log("MojoClient constructor...");		
+		console.log("MojoClient constructor...");
 		
     // WebSocket object that manages the remote connection.
     this.webSocket = undefined;
@@ -24,7 +24,7 @@ class MojoClient
     this.connectedWebSocket = false;
     // String that gives the address of the MOJO server.
     this.webSocketUri = undefined;
-  		
+
     // Application-defined callback to process received sensor data.
     this.appOnDataHandler = undefined;
   
@@ -56,7 +56,9 @@ class MojoClient
    */
   setDataHandler(callbackFunction)
   {
-    this.appOnDataHandler = callbackFunction;
+    //Bound "this" so that handlers know which client sent updates.
+    //Consider doing this for all handlers, if this choice makes sense. -CF
+    this.appOnDataHandler = callbackFunction.bind(this);
   }
 
   /*
@@ -126,7 +128,7 @@ class MojoClient
   
 		if(this.isConnected())
       this.disconnect();
-    this.openWebSocket(wsUri);	
+    this.openWebSocket(wsUri);
   }
 	
   disconnect()
@@ -283,19 +285,19 @@ class MojoClient
    * @param message Message as a JSON-formatted string.
    * @return true if socket exists and is ready; else, false.
    */
-  sendMessage = function(message) 
+  sendMessage(message) 
   { 
     this.errorMessage = "";
     if(this.isConnected())
     {
-      this.webSocket.send(message); 
+      this.webSocket.send(message);
       console.log("Send to server " + this.webSocketUri + " : " + message);
-      return true;    
+      return true;
     } 
     else
     {
       this.errorMessage = "Failed to send websocket message since socket is closed.";
-      return false; 
+      return false;
     }    
   }	
 	
@@ -347,7 +349,7 @@ class MojoClient
     this.webSocket.onclose = this.onWebSocketClose.bind(this);
   }	
 	
-  onWebSocketOpen = function(evt) 
+  onWebSocketOpen(evt) 
   { 
     this.connectedWebSocket = true;
     console.log("Mojo Client: Connected to server at " + this.webSocketUri); 
@@ -434,7 +436,7 @@ class MojoClient
 				this.appOnErrorHandler(messg);
   }
 
-  onWebSocketClose = function(evt) 
+  onWebSocketClose(evt) 
   { 
     console.log("Mojo Client: Closed connection with server at " + this.webSocketUri); 
   

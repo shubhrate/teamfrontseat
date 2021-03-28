@@ -27,45 +27,40 @@ const MojoClient = require("./MojoClient.js");
 
 var mojoSocketPort = 9003;
 var WebSocket = require('ws');
-var socketServer = new WebSocket.Server({ port: mojoSocketPort });
+//var socketServer = new WebSocket.Server({ port: mojoSocketPort });
 
+//UPDATE: maps now indexed by IP
 var playersMap = new Map();
-var playersMapUpdateInterval = undefined;
 var mojoClientsMap = new Map();
 
-playersMapUpdateInterval = setInterval(broadcastMap, 1000 / 30);
+setInterval(broadcastMotionUpdate, 1000 / 30);
 
 /** Connection to client */
 const express = require('express');
 const app = express();
 const expressWs = require('express-ws')(app);
 
-var clientSocketPort = 3000;
-var clients = [];
+let clientSocketPort = 3000;
+let clients = [];
 
 //Hardcoding Jane Doe to be the player that gets moved
 let player = {
-    id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
+    id: '178376c1f97-f0fa6018', diagramID: '1', posX: 3, posY: 3, angle: 0,
     mojoPort: mojoSocketPort,
     mojoIpAddress: 'localhost'
 };
 //Add Jane Doe to playersMap
 playersMap.set(player.id, player);
 
-app.use(function (req, res, next) {
-    console.log('middleware');
-    req.testing = 'testing';
-    return next();
-});
-
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
+    const clientIP = ws._socket.remoteAddress;
+    let trackerClient = createMojoClient(player.mojoPort, clientIP);
+    if(trackerClient.isConnected()) {
+        mojoClientsMap.set(clientIP, trackerClient);
+    }
 
-    // Add Jane Doe to mojo clients map
-    let viveClient = createMojoClient(player.mojoPort, "localhost");
-    mojoClientsMap.set(player.id, viveClient);
-    
     ws.on('message', function(msgStr) {
 
         //log message from client
@@ -97,9 +92,9 @@ app.ws('/', function (ws, req) {
             remove,
             createInstance,
             newPlayer,
+            quitPlayer,
             pauseLiveMotion,
-            startLiveMotion,
-            quitPlayer
+            startLiveMotion
         };
 
         var collection = collectionMap[msg.collection];
@@ -155,7 +150,7 @@ function update(collection, query, ws, requestID) {
         respondToSocket({updated: true}, ws, requestID);
         if (isEntity) {
             broadcastToClients({
-                type: "entity_update",
+                type: "updateOneEntity",
                 data: query
             }, ws);
         } 
@@ -182,29 +177,41 @@ function createInstance(collection, data, ws, requestID) {
 }
 
 function newPlayer(collection, data, ws, requestID) {
-    console.log("create new player: " + data.id +
-                " with Mojo server on port#" + data.mojoPort +
-                " at IP address: " + data.mojoIpAddress);
+    console.log("New player controlling entity " + data.id);
     if (data.id != undefined) {
         //Because current tracker version probably doesn't set this property, hardcode default
         const diagramID = data.diagramID || "1";
+        const mojoIpAddress = ws._socket.remoteAddress;
+
+        const entityInitial = {
+            "posX": data.posX,
+            "posY": data.posY,
+        };
 
         // Construct a player object, can omit color attribute.
         let player = {
-            id: data.id, diagramID, x: 3, y: 3, angle: 0,
-            mojoPort: data.mojoPort,
-            mojoIpAddress: data.mojoIpAddress
+            id: data.id,
+            diagramID,
+            "angle": 0,
+            mojoPort: mojoSocketPort,
+            mojoIpAddress,
+            entityInitial
         };
-        playersMap.set(data.id, player);
+        Object.assign(player, entityInitial);
+        playersMap.set(mojoIpAddress, player);
 
         // Reply message to confirm success.
         let messg = {
-            cmd: "new player", id: data.id,
-            mojoPort: data.mojoPort, mojoIpAddress: data.mojoIpAddress
+            cmd: "new player",
+            id: data.id,
         };
         
         respondToSocket(messg, ws, requestID);
-        broadcastToClients(messg, ws);
+        broadcastToClients({
+            id: data.id,
+            diagramID,
+            "hasController": true
+        }, ws);
 
         // New player request will specify the port number and remote WebSocket URI
         // of each player's motion-tracker server.
@@ -212,6 +219,23 @@ function newPlayer(collection, data, ws, requestID) {
         let mojoClient = createMojoClient(data.mojoPort, data.mojoIpAddress);
         mojoClientsMap.set(data.id, mojoClient);
     }
+}
+
+function quitPlayer(collection, data, ws, requestID) {
+    console.log("quit player: " + data.id);
+    const socketIP = ws._socket.remoteAddress;
+    if (data.id != undefined) {
+        if (playersMap.get(socketIP).id === data.id) {
+            playersMap.delete(socketIP);
+        }
+    }
+    let messg = { type: "quit player", id: data.id };
+    respondToSocket(messg, ws, requestID);
+    broadcastToClients({
+        id: data.id,
+        diagramID: data.diagramID,
+        "hasController": false
+    }, ws);
 }
 
 function pauseLiveMotion(collection, data, ws, requestID) {
@@ -222,16 +246,6 @@ function pauseLiveMotion(collection, data, ws, requestID) {
 function startLiveMotion(collection, data, ws, requestID) {
     // The director's WebClient says everyone starts live motion streaming for acting
     startMojoServers();
-}
-
-function quitPlayer(collection, data, ws, requestID) {
-    console.log("quit player: " + data.id);
-    if (data.id != undefined) {
-        playersMap.delete(data.id);
-    }
-    let messg = { type: "quit player", id: data.id };
-    respondToSocket(messg, ws, requestID);
-    broadcastToClients(messg, ws);
 }
 
 function respondToSocket(msg, ws, requestID) {
@@ -257,6 +271,19 @@ function broadcastToClients(msgObj, socketToIgnore) {
     }
 }
 
+function broadcastMotionUpdate() {
+    let playerList = Array.from(playersMap.values());
+    if(playerList.length > 0) { 
+        let data = [];
+        for(const {id, diagramID, posX, posY, angle} of playerList) {
+            data.push({id, diagramID, posX, posY, angle});
+        }
+        const msg = {"type": "updateEntities", data};
+        broadcastToClients(msg);
+    }
+}
+
+/*
 function broadcastMap() {
     let playerList = Array.from(playersMap.values());
     // Changed cmd to type
@@ -270,6 +297,7 @@ function broadcastMap() {
 			client.send(jsonMessg);
     }
 }
+*/
 
 /* Create a MojoClient to manage and receive incoming motion tracker server data
  * for one remote client.
@@ -280,53 +308,49 @@ function broadcastMap() {
 function createMojoClient(portNumber, ipAddress) {		
     let mojoClient = new MojoClient();
     mojoClient.setDataHandler(onMojoData);
-    
+
     // MojoClient connect method will construct the WebSocket URI
 	// string of the form: "ws://192.168.10.1:3030", where ipAddress "192.168.10.1"
-    // and portNumber is 3030.	
+    // and portNumber is 3030.
 	mojoClient.connect(portNumber, ipAddress);
-	
+
 	return mojoClient;
 }
+
+const MOTION_SCALE_FACTOR = 5;
 
 function onMojoData(data) {
     // Sample incoming JSON message from a remote user's Vive tracker server.
     // { "time": 32.1,
     //   "channels":[{"id": "384327" ,"pos": {"x":0.1, "y":0,"z":2.3},
     //             "rot":{"x":0, "y": 45, "z":0}}]}
-    //console.log("Data Revieved!");
     let timeStamp = data.time;
     
     // We expect each remote site to send data for only one moving performer.
-    for (let c = 0; c < data.channels.length; c++) {
-		let rigidBody = data.channels[c];
-		// Get moving player object by unique ID provided by incoming motion-tracker server data stream.
-		let player = playersMap.get(rigidBody.id);
-        if (player != undefined) {
-            // Each MojoClient motion sensor defines the range of its positional data.
-            let mojoClient = mojoClientsMap.get(player.id);
-            let bounds = mojoClient.serverState.bounds;
-            let minX = -2;
-            let maxX = 2;
-            let minZ = -2;
-            let maxZ = 2;
+    for (let rigidBody of data.channels) {
+        const socketIP = this.webSocket._socket.remoteAddress;
+		let player = playersMap.get(socketIP);
+        if (player !== undefined) {
+            const posX = rigidBody.pos.x * MOTION_SCALE_FACTOR;
+            const posY = rigidBody.pos.z * MOTION_SCALE_FACTOR;
+            const angle = rigidBody.rot.y;
+            const bounds = mojoClient.serverState.bounds;
+            if(player.trackerInitial === undefined) {
+                //Set initial position of tracker
+                player.trackerInitial = {posX, posY, angle};
+            } else {
+                //Update player position
+                //Each MojoClient motion sensor defines the range of its positional data.'
+                const offsetX = posX - player.trackerInitial.posX;
+                const offsetY = posY - player.trackerInitial.posY;
+                player.posX = player.entityInitial.posX - offsetX;
+                player.posY = player.entityInitial.posY - offsetY;
+                player.angle = angle; // rotation angle in degrees.
+            }
 
-            // Convert rigid body position from sensor device coordinates to 
-            // current play stage dimensions.
-
-            // For this unit test demo, we assume stage is canvas of size 800 x 600
-            //let x = ((rigidBody.pos.x - bounds.minX)/(bounds.maxX - bounds.minX)) * 3;
-            //let y = ((rigidBody.pos.z - bounds.minZ) / (bounds.maxZ - bounds.minZ)) * 3;
-            //let x = ((rigidBody.pos.x - minX) / (maxX - minX)) * 10;
-            //let y = ((rigidBody.pos.z - minZ) / (maxZ - minZ)) * 10;
-            let x = rigidBody.pos.x * 5;
-            let y = rigidBody.pos.z * 5;
-            player.x = x;
-            player.y = y;
-            player.angle = rigidBody.rot.y; // rotation angle in degrees.
-
+            /*
             broadcastToClients({
-                type: "entity_update",
+                type: "updateOneEntity",
                 data: {
                     id: player.id,
                     diagramID: player.diagramID,
@@ -335,6 +359,7 @@ function onMojoData(data) {
                     angle: player.angle
                 }
             });
+            */
         } else { // end if player is defined.
             console.log("player is undefined");
         }

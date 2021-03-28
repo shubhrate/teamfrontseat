@@ -4,7 +4,7 @@
 DATA IN should arrive as stringified JSON with the following format:
 {
 	type: "foo",
-	id: "123456789-abcdef",
+	requestID: "123456789-abcdef",
 	data: {}
 }
 where:
@@ -21,40 +21,60 @@ let socket, isOpen = false;
 let diagrams = {};
 let pendingCallbacks = {};
 
-//HANDLERS FOR DATA OF DIFFERENT TYPES. This is the important bit.
+///////////////////////////////////////////////////////////
+//HANDLERS FOR DATA OF DIFFERENT TYPES.
+//This is the important bit.
+
+/**
+ * Modify a limited set of properties within one entity,
+ * as specified by a data object
+ * @param {Object} entity the entity to modify
+ * @param {Object} data an object containing data to change within the entity
+ */
+function updateOneEntity(data) {
+	const diagram = diagrams[data.diagramID];
+	const entity = diagram.getEntityById(data.id);
+	delete data.diagramID;
+	delete data.id;
+	for (const p in data) { //Notice: "in," not "of." They're different.
+		if (entity.__lookupSetter__(p)) {
+			entity[p] = data[p];
+		} else {
+			entity.data[p] = data[p];
+		}
+	}
+	if (data.hasController) {
+		diagram.attachments.inputManager.deselectEntity(entity);
+	}
+	diagram.draw();
+}
+
 //New behaviors for how to handle incoming data are added here. This keeps
 //these handlers in one place, rather than spread throughout the project files.
 const requestTypes = {
 	/*
-	Get the complete list of entities on the diagram.
-	DATA: an array of entity data objects.
+	Reset the complete list of entities on the diagram.
+	DATA: diagramID, and an "entities" property with an array of entity data objects.
 	*/
-	"entities_set": function(data, app) {
-		app.diagram.entities = [];
-		app.diagram.addUnclassifiedEntity(...data);
-		app.diagram.draw();
+	"setEntities": function(data) {
+		const diagram = diagrams[data.diagramID];
+		diagram.entities = [];
+		diagram.addUnclassifiedEntity(...data.entities);
+		diagram.draw();
 	},
 	/*
 	Update one or more properties of one entity
 	DATA: entity/diagram id and the attributes to be updated, in a flat object.
 	*/
-	"entity_update": function(data) {
-		const diagram = diagrams[data.diagramID];
-		const entity = diagram.getEntityById(data.id);
-		delete data.diagramID;
-		delete data.id;
-		//With ids out of the way, we drop other properties into the entity
-		for(const p in data) { //Notice: "in," not "of." They're different.
-			if (entity.__lookupSetter__(p)) {
-				entity[p] = data[p];
-			} else {
-				entity.data[p] = data[p];
-			}
+	updateOneEntity,
+	/*
+	Update one or more properties of multiple entities
+	DATA: an array of data objects (all must contain "id" and "diagramID").
+	*/
+	"updateEntities": function(data) {
+		for (let entData of data) {
+			updateOneEntity(entData);
 		}
-		if(data.hasController) {
-			diagram.attachments.inputManager.deselectEntity(entity);
-		}
-		diagram.draw();
 	}
 }
 
@@ -99,6 +119,7 @@ export function open(url, openCallback, errorCallback) {
 			if(errorCallback) errorCallback();
 		}
 		socket.onclose = function() {
+			isOpen = false;
 			//TODO: was I gonna put something here?
 		}
 		socket.onmessage = onWSMessage;
