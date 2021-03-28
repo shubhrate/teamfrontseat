@@ -43,14 +43,20 @@ const expressWs = require('express-ws')(app);
 var clientSocketPort = 3000;
 var clients = [];
 
-//Hardcoding Jane Doe to be the player that gets moved
-let player = {
+//Hardcoding Jane Doe and John Doe to be the players that gets moved
+let playerOne = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
     mojoPort: mojoSocketPort,
     mojoIpAddress: 'localhost'
 };
-//Add Jane Doe to playersMap
-playersMap.set(player.id, player);
+let playerTwo = {
+    id: '278376c1f97-f0fa6018', diagramID: '2', x: 3, y: 2, angle: 0,
+    mojoPort: mojoSocketPort,
+    mojoIpAddress: 'localhost'
+};
+//Add Jane Doe and John Doe to playersMap
+playersMap.set(playerOne.id, playerOne);
+playersMap.set(playerTwo.id, playerTwo);
 
 app.use(function (req, res, next) {
     console.log('middleware');
@@ -62,9 +68,11 @@ app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
 
-    // Add Jane Doe to mojo clients map
-    let viveClient = createMojoClient(player.mojoPort, "localhost");
-    mojoClientsMap.set(player.id, viveClient);
+    // Add Jane Doe and John Doe to mojo clients map
+    let viveClientOne = createMojoClient(playerOne.mojoPort, "localhost");
+    mojoClientsMap.set(playerOne.id, viveClientOne);
+    let viveClientTwo = createMojoClient(playerTwo.mojoPort, "localhost");
+    mojoClientsMpa.set(playerTwo.id, viveClientTwo);
     
     ws.on('message', function(msgStr) {
 
