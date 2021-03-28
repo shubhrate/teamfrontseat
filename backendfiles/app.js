@@ -54,12 +54,9 @@ playersMap.set(player.id, player);
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
-    let clientIP = ws._socket.remoteAddress;
+    let clientIP = getWSSocketIP(ws);
     let trackerClient = createMojoClient(player.mojoPort, clientIP);
     if(trackerClient.isConnected()) {
-        if(clientIP === "::1") {
-            clientIP = "127.0.0.1";
-        }
         mojoClientsMap.set(clientIP, trackerClient);
     }
 
@@ -183,7 +180,7 @@ function newPlayer(collection, data, ws, requestID) {
     if (data.id != undefined) {
         //Because current tracker version probably doesn't set this property, hardcode default
         const diagramID = data.diagramID || "1";
-        const mojoIpAddress = ws._socket.remoteAddress;
+        const mojoIpAddress = getWSSocketIP(ws);
 
         const entityInitial = {
             "posX": data.posX,
@@ -227,7 +224,7 @@ function newPlayer(collection, data, ws, requestID) {
 
 function quitPlayer(collection, data, ws, requestID) {
     console.log("quit player: " + data.id);
-    const socketIP = ws._socket.remoteAddress;
+    const socketIP = getWSSocketIP(ws);
     if (data.id != undefined) {
         if (playersMap.get(socketIP).id === data.id) {
             playersMap.delete(socketIP);
@@ -332,7 +329,7 @@ function onMojoData(data) {
     
     // We expect each remote site to send data for only one moving performer.
     for (let rigidBody of data.channels) {
-        let socketIP = this.webSocket._socket.remoteAddress;
+        let socketIP = getWSSocketIP(this.webSocket);
 		let player = playersMap.get(socketIP);
         if (player !== undefined) {
             const posX = rigidBody.pos.x * MOTION_SCALE_FACTOR;
@@ -380,4 +377,12 @@ function pauseMojoServers() {
 	let mojoClientsList = Array.from( mojoClientsMap.values() );	
 	for(let i = 0; i < mojoClientsList.length; i++)
 		mojoClientsList[i].sendMessageBroadcast(false);
+}
+
+function getWSSocketIP(ws) {
+    let ip = ws._socket.remoteAddress;
+    if(ip === "::1" || ip === "localhost") {
+        ip = "127.0.0.1";
+    }
+    return ip;
 }
