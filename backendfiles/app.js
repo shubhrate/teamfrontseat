@@ -72,7 +72,7 @@ app.ws('/', function (ws, req) {
     let viveClientOne = createMojoClient(playerOne.mojoPort, "localhost");
     mojoClientsMap.set(playerOne.id, viveClientOne);
     let viveClientTwo = createMojoClient(playerTwo.mojoPort, "localhost");
-    mojoClientsMpa.set(playerTwo.id, viveClientTwo);
+    mojoClientsMap.set(playerTwo.id, viveClientTwo);
     
     ws.on('message', function(msgStr) {
 
