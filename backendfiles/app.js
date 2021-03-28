@@ -54,9 +54,12 @@ playersMap.set(player.id, player);
 app.ws('/', function (ws, req) {
     console.log("Client connected.");
     clients.push(ws);
-    const clientIP = ws._socket.remoteAddress;
+    let clientIP = ws._socket.remoteAddress;
     let trackerClient = createMojoClient(player.mojoPort, clientIP);
     if(trackerClient.isConnected()) {
+        if(clientIP === "::1") {
+            clientIP = "127.0.0.1";
+        }
         mojoClientsMap.set(clientIP, trackerClient);
     }
 
@@ -329,7 +332,7 @@ function onMojoData(data) {
     
     // We expect each remote site to send data for only one moving performer.
     for (let rigidBody of data.channels) {
-        const socketIP = this.webSocket._socket.remoteAddress;
+        let socketIP = this.webSocket._socket.remoteAddress;
 		let player = playersMap.get(socketIP);
         if (player !== undefined) {
             const posX = rigidBody.pos.x * MOTION_SCALE_FACTOR;
