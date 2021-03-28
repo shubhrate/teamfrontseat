@@ -27,7 +27,6 @@ const MojoClient = require("./MojoClient.js");
 
 var mojoSocketPort = 9003;
 var WebSocket = require('ws');
-//var socketServer = new WebSocket.Server({ port: mojoSocketPort });
 
 //UPDATE: maps now indexed by IP
 var playersMap = new Map();
@@ -213,11 +212,13 @@ function newPlayer(collection, data, ws, requestID) {
             "hasController": true
         }, ws);
 
+        /*
         // New player request will specify the port number and remote WebSocket URI
         // of each player's motion-tracker server.
         // This central server will use a MojoClient to manage each remote motion data stream.
         let mojoClient = createMojoClient(data.mojoPort, data.mojoIpAddress);
         mojoClientsMap.set(data.id, mojoClient);
+        */
     }
 }
 
