@@ -320,6 +320,8 @@ function createMojoClient(portNumber, ipAddress) {
 
 const MOTION_SCALE_FACTOR = 5;
 
+let testFlag = false;
+
 function onMojoData(data) {
     // Sample incoming JSON message from a remote user's Vive tracker server.
     // { "time": 32.1,
@@ -330,6 +332,10 @@ function onMojoData(data) {
     // We expect each remote site to send data for only one moving performer.
     for (let rigidBody of data.channels) {
         let socketIP = getWSSocketIP(this.webSocket);
+        if(!testFlag) {
+            console.log("Started data stream on socket " + socketIP);
+            testFlag = true;
+        }
 		let player = playersMap.get(socketIP);
         if (player !== undefined) {
             const posX = rigidBody.pos.x * MOTION_SCALE_FACTOR;
@@ -338,10 +344,11 @@ function onMojoData(data) {
             const bounds = mojoClient.serverState.bounds;
             if(player.trackerInitial === undefined) {
                 //Set initial position of tracker
+                console.log("Set initial position of tracker on entity" + data.id);
                 player.trackerInitial = {posX, posY, angle};
             } else {
                 //Update player position
-                //Each MojoClient motion sensor defines the range of its positional data.'
+                //Each MojoClient motion sensor defines the range of its positional data.
                 const offsetX = posX - player.trackerInitial.posX;
                 const offsetY = posY - player.trackerInitial.posY;
                 player.posX = player.entityInitial.posX - offsetX;
@@ -362,7 +369,7 @@ function onMojoData(data) {
             });
             */
         } else { // end if player is defined.
-            console.log("player is undefined");
+            //console.log("player is undefined");
         }
 	}
 }

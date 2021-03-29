@@ -133,7 +133,7 @@ export default class InputManager {
 				"angle": ent.angle
 			});
 		} else return;
-		//send(msg);
+		send(msg);
 	}
 
 	///////////////////////////////////
