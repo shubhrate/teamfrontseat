@@ -36,7 +36,7 @@ async def server(websocket, path):
             txt_json = {
                 'time' : start,
                 'channels' : [
-                      {'id' : '178376c1f97-f0fa6018', 'pos' : {}, 'rot' : {}}  
+                      {'id' : '178376c5ebe-0ed6977d', 'pos' : {}, 'rot' : {}}  
                 ]
             }
             for each in v.devices["tracker_1"].get_pose_euler():
@@ -67,7 +67,8 @@ async def server(websocket, path):
             sleep_time = interval-(time.time()-start)
             if sleep_time>0:
                 time.sleep(sleep_time)
-
-start_server = websockets.serve(server, "localhost", 9003)
+# IP address of the computer running the vive tracking server
+# Each tracker client will need to change this to be the IP of their computer
+start_server = websockets.serve(server, "192.168.1.5", 9003)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

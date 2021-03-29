@@ -44,15 +44,18 @@ var clientSocketPort = 3000;
 var clients = [];
 
 //Hardcoding Jane Doe and John Doe to be the players that gets moved
+
 let playerOne = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
     mojoPort: mojoSocketPort,
-    mojoIpAddress: 'localhost'
+    // Needs to be the IP address of the computer running the tracking server
+    mojoIpAddress: '192.168.1.17'
 };
 let playerTwo = {
-    id: '278376c1f97-f0fa6018', diagramID: '2', x: 3, y: 2, angle: 0,
+    id: '178376c5ebe-0ed6977d', diagramID: '1', x: 3, y: 2, angle: 0,
     mojoPort: mojoSocketPort,
-    mojoIpAddress: 'localhost'
+    // Needs to be the IP address of the computer running the tracking server
+    mojoIpAddress: '192.168.1.5'
 };
 //Add Jane Doe and John Doe to playersMap
 playersMap.set(playerOne.id, playerOne);
@@ -69,9 +72,9 @@ app.ws('/', function (ws, req) {
     clients.push(ws);
 
     // Add Jane Doe and John Doe to mojo clients map
-    let viveClientOne = createMojoClient(playerOne.mojoPort, "localhost");
+    let viveClientOne = createMojoClient(playerOne.mojoPort, playerOne.mojoIpAddress);
     mojoClientsMap.set(playerOne.id, viveClientOne);
-    let viveClientTwo = createMojoClient(playerTwo.mojoPort, "localhost");
+    let viveClientTwo = createMojoClient(playerTwo.mojoPort, playerTwo.mojoIpAddress);
     mojoClientsMap.set(playerTwo.id, viveClientTwo);
     
     ws.on('message', function(msgStr) {
