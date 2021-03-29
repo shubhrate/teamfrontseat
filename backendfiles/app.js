@@ -176,10 +176,12 @@ function createInstance(collection, data, ws, requestID) {
 
 function newPlayer(collection, data, ws, requestID) {
     console.log("New player controlling entity " + data.id);
-    if (data.id != undefined) {
+    if (data.id !== undefined) {
         //Because current tracker version probably doesn't set this property, hardcode default
+        console.log("here");
         const diagramID = data.diagramID || "1";
         const mojoIpAddress = getWSSocketIP(ws);
+        console.log("Player IP address: " + mojoIpAddress);
 
         const entityInitial = {
             "posX": data.posX,
@@ -386,7 +388,7 @@ function pauseMojoServers() {
 }
 
 function getWSSocketIP(ws) {
-    let ip = ws._socket.remoteAddress;
+    let ip = ws.handshake.address.address;
     if(ip === "::1" || ip === "localhost") {
         ip = "127.0.0.1";
     }
