@@ -110,7 +110,7 @@ export default class InputManager {
 	 */
 	setControlledEntity(ent) {
 		let msg = {
-			"collection": "none",
+			"collection": "entities",
 			"data": {
 				"id": ent.id,
 				"diagramID": ent.diagramID,
