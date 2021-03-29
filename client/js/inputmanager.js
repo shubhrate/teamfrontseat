@@ -112,8 +112,8 @@ export default class InputManager {
 		let msg = {
 			"collection": "entities",
 			"data": {
-				"id": ent.id,
-				"diagramID": ent.diagramID,
+				"id": ent.data.id,
+				"diagramID": ent.data.diagramID,
 			}
 		};
 		if(this.controlledEntity === ent) {
