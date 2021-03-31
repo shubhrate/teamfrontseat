@@ -44,18 +44,17 @@ var clientSocketPort = 3000;
 var clients = [];
 
 //Hardcoding Jane Doe and John Doe to be the players that gets moved
-
 let playerOne = {
     id: '178376c1f97-f0fa6018', diagramID: '1', x: 3, y: 3, angle: 0,
     mojoPort: mojoSocketPort,
     // Needs to be the IP address of the computer running the tracking server
-    mojoIpAddress: '192.168.1.17'
+    mojoIpAddress: process.env.PLAYER_ONE_IP
 };
 let playerTwo = {
     id: '178376c5ebe-0ed6977d', diagramID: '1', x: 3, y: 2, angle: 0,
     mojoPort: mojoSocketPort,
     // Needs to be the IP address of the computer running the tracking server
-    mojoIpAddress: '192.168.1.5'
+    mojoIpAddress: process.env.PLAYER_TWO_IP
 };
 //Add Jane Doe and John Doe to playersMap
 playersMap.set(playerOne.id, playerOne);
