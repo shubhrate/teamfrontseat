@@ -113,7 +113,7 @@ app.ws('/', function (ws, req) {
         };
 
         var collection = collectionMap[msg.collection];
-        if(!collection) {
+        if(collection === undefined) {
             throw new Error("Invalid message collection: " + msg.collection);
         }
 
