@@ -106,7 +106,7 @@ app.ws('/', function (ws, req) {
             update,
             remove,
             createInstance,
-            newPlayer,
+            connectPlayer,
             pauseLiveMotion,
             startLiveMotion,
             quitPlayer
@@ -191,7 +191,7 @@ function createInstance(collection, data, ws, requestID) {
     });
 }
 
-function newPlayer(collection, data, ws, requestID) {
+function connectPlayer(collection, data, ws, requestID) {
     console.log("create new player: " + data.id +
                 " with Mojo server on port#" + data.mojoPort +
                 " at IP address: " + data.mojoIpAddress);
