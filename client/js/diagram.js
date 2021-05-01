@@ -1,4 +1,3 @@
-import e from "express";
 import entityClassMap from "./entity.js";
 import EntityDraw from "./entitydraw.js";
 import {uniqueID} from "./util.js";
@@ -195,7 +194,12 @@ export default class Diagram {
 		if(ent.moved) {
 			this.updateEntityPosition(ent);
 		}
-		EntityDraw[ent.data.drawType](ent, this.ctx);		
+		if (ent.data.drawType){
+			EntityDraw[ent.data.drawType](ent, this.ctx);
+		} else {
+			EntityDraw[ent.data["0"].drawType](ent, this.ctx);
+		}
+				
 	}
 
 	drawEntities() {
