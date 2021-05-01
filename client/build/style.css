@@ -123,3 +123,30 @@ a {
   text-decoration: inherit;
   color: inherit;
 }
+
+.toolbarnav {
+  background-color: #f2f2f2;
+  overflow: hidden;
+}
+
+/* Style the links inside the navigation bar */
+.toolbarnav a {
+  float: left;
+  color: #333;
+  text-align: center;
+  padding: 12px 14px;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+/* Change the color of links on hover */
+.toolbarnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+/* Add a color to the active/current link */
+.toolbarnav a.active {
+  background-color: #b62d2d;
+  color: white;
+}
