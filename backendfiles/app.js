@@ -37,6 +37,7 @@ playersMapUpdateInterval = setInterval(broadcastMap, 1000 / 30);
 
 /** Connection to client */
 const express = require('express');
+const e = require('express');
 const app = express();
 const expressWs = require('express-ws')(app);
 
@@ -61,13 +62,13 @@ playersMap.set(playerOne.id, playerOne);
 playersMap.set(playerTwo.id, playerTwo);
 
 app.use(function (req, res, next) {
-    console.log('middleware');
+    //console.log('middleware');
     req.testing = 'testing';
     return next();
 });
 
 app.ws('/', function (ws, req) {
-    console.log("Client connected.");
+    console.log("Connected to client.");
     clients.push(ws);
 
     // Add Jane Doe and John Doe to mojo clients map
@@ -77,12 +78,13 @@ app.ws('/', function (ws, req) {
     mojoClientsMap.set(playerTwo.id, viveClientTwo);
     
     ws.on('message', function(msgStr) {
-
+        
         //log message from client
-        console.log(msgStr);
+        //console.log(msgStr);
 
         //returns an object that matching the string
         const msg = JSON.parse(msgStr);
+        console.log("Received message from client of type " + msg.type);
 
         //after JSON.parse:
         /*
@@ -125,11 +127,11 @@ app.ws('/', function (ws, req) {
         }
 
     });
-    console.log('socket', req.testing);
+    //console.log('socket', req.testing);
     ws.on('close', (ws) => {
         clients.splice(clients.indexOf(ws), 1);
-        console.log("Client disconnected.");
-        console.log(ws);
+        console.log("Disconnected from client.");
+        //console.log(ws);
     });
 });
 
@@ -140,8 +142,8 @@ function getOne(collection, query, ws, requestID) {
     //finds a single instance that matches the query
     //query format: {name: Jane}, or {name: Jane, password: password}, or {id: JanesID}, or {name: Jane, id: JanesID}
     collection.findOne(query, function (err, result) {
-        if (err) return handleError(err);
         if(err) console.log(err);
+        if (err) return handleError(err);
         //callback function accesses ws via closure
         respondToSocket({result}, ws, requestID);
     });
@@ -177,17 +179,46 @@ function remove(collection, query, ws, requestID) {
     collection.findOneAndDelete({id: query.id}, function (err) {
         if (err) console.log(err);
         respondToSocket({deleted: true}, ws, requestID);
-        broadcastToClients(query, ws);
+        if (collection == Entity) {
+            broadcastToClients({
+                type: "entity_remove",
+                data: {
+                    id: query.id,
+                    diagramID: query.diagramID
+                }
+            });
+        } else {
+            broadcastToClients(query, ws);
+        }
     });
 }
 
-function createInstance(collection, data, ws, requestID) {
+function createInstance(collection, inputData, ws, requestID) {
     //create new instance of collection with given data
-    let instance = new collection(data);
+    let instance = new collection(inputData);
     instance.save(function (err) {
         if (err) console.log(err);
         respondToSocket({added: true}, ws, requestID);
-        broadcastToClients(data, ws);
+        if (collection == Entity) {
+            broadcastToClients({
+                type: "entity_add",
+                data: {
+                    id: inputData.id,
+                    diagramID: inputData.diagramID,
+                    class: inputData.class,
+                    drawType: inputData.drawType,
+                    name: inputData.name,
+                    color: inputData.color,
+                    color2: inputData.color2,
+                    posX: inputData.posX,
+                    posY: inputData.posY,
+                    size: inputData.size,
+                    angle: inputData.angle
+                }
+            });
+        } else {
+            broadcastToClients(data, ws);
+        }
     });
 }
 
@@ -248,9 +279,15 @@ function respondToSocket(msg, ws, requestID) {
     if(requestID) {
         msg.requestID = requestID;
     }
-    console.log("Responded to request " + requestID);
-    const finalResponse = JSON.stringify(msg);
-    ws.send(finalResponse);
+    if (ws.readyState == WebSocket.OPEN) {
+        //console.log("Responded to request " + requestID);
+        const finalResponse = JSON.stringify(msg);
+        ws.send(finalResponse);
+        //console.log("Response sent to client: " + finalResponse);
+        console.log("sent a response to client");
+    } else {
+        console.log("Could not respond to request " + requestID + ". The socket is closed.");
+    }
 }
 
 function broadcastToClients(msgObj, socketToIgnore) {
