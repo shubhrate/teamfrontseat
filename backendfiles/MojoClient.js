@@ -15,7 +15,7 @@ const WebSocket = require('ws');
 class MojoClient
 {
 	constructor() {
-		console.log("MojoClient constructor...");		
+		//console.log("MojoClient constructor...");		
 		
     // WebSocket object that manages the remote connection.
     this.webSocket = undefined;
@@ -41,7 +41,7 @@ class MojoClient
 		// values changed on receipt of server responses.
 		this.serverState = new MojoServerState();
 		
-		console.log(JSON.stringify(this.serverState));
+		//console.log(JSON.stringify(this.serverState));
   }
 	
 	//----- Application-defined callbacks respond to Mojo Server events ----
@@ -350,7 +350,7 @@ class MojoClient
   onWebSocketOpen = function(evt) 
   { 
     this.connectedWebSocket = true;
-    console.log("Mojo Client: Connected to server at " + this.webSocketUri); 
+    //console.log("Mojo Client: Connected to server at " + this.webSocketUri); 
 		
     if(this.appOnOpenConnectionHandler)
       this.appOnOpenConnectionHandler();
