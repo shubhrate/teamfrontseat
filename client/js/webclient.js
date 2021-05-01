@@ -55,12 +55,45 @@ const requestTypes = {
 			diagram.attachments.inputManager.deselectEntity(entity);
 		}
 		diagram.draw();
+	},
+	/*
+	Add an entity to the diagram.
+	DATA: entity/diagram id and the attributes to be added to new entity.
+	*/
+	"entity_add": function(data) {
+		const diagram = diagrams[data.diagramID];
+		diagram.addUnclassifiedEntity([data]);
+		refreshDiagram(diagram);
+		//location.reload();
+	},
+	/*
+	Remove an entity from the diagram.
+	DATA: entity/diagram id and the attributes of the entity to be removed.
+	*/
+	"entity_remove": function(data) {
+		const diagram = diagrams[data.diagramID];
+		diagram.removeEntity([data]);
+		refreshDiagram(diagram);
+		//location.reload();
 	}
 }
+
+const playerColors = ["red", "blue", "purple", "green", "gray", "orange", "yellow"];
 
 //TODO: this will want more detail if we enable users to "log into" diagrams
 export function registerDiagram(dg) {
 	diagrams[dg.id] = dg;
+}
+
+export function refreshDiagram(dg) {
+	send({
+		type: "getAll",
+		collection: "entities",
+		data: {diagramID: "1"}
+	}, function(data) {
+		dg.addUnclassifiedEntity(...data.result);
+		dg.draw();
+	});
 }
 
 ///////////////////////////////////////////////////////////
@@ -68,7 +101,7 @@ export function registerDiagram(dg) {
 
 function onWSMessage(e) {
 	const msg = JSON.parse(e.data);
-
+	
 	if(msg.hasOwnProperty("requestID")) {
 		//Message is a response to a request - look for callback
 		if (pendingCallbacks.hasOwnProperty(msg.requestID)) {
@@ -99,7 +132,7 @@ export function open(url, openCallback, errorCallback) {
 			if(errorCallback) errorCallback();
 		}
 		socket.onclose = function() {
-			//TODO: was I gonna put something here?
+			console.log("Socket: closed");
 		}
 		socket.onmessage = onWSMessage;
 		isOpen = true;
@@ -130,7 +163,7 @@ export function send(msg, callback) {
 		pendingCallbacks[id] = callback;
 	}
 	socket.send(JSON.stringify(msg));
-	//console.log("Sent message: ", msg);
+	console.log("sent message of type: " + msg.type);
 }
 
 ///////////////////////////////////////////////////////////
@@ -196,3 +229,122 @@ export function queueUpdate(collection, ...objects) {
 		window.setTimeout(unblockUpdatesAndSend, UPDATE_INTERVAL);
 	}
 }
+
+function createRequestedPlayer(col) {
+	//send createInstance request message, in the entities collection
+	send({
+		type: "createInstance", 
+		collection: "entities", 
+		data: {
+			id: uniqueID(), 
+			diagramID: "1", 
+			class: "actor", 
+			drawType: "actor", 
+			name: document.getElementById("name").value, 
+			color: col, 
+			color2: "dark" + col, 
+			posX: 4, 
+			posY: -1.5, 
+			size: 0.75, 
+			angle: 0
+		}
+	}, function(data){
+		console.log("a player has been added!");
+	});
+}
+
+function removeRequestedPlayer(){
+	var playerToRemove;
+	//send getOne request message, in the entities collection
+	send({
+		type: "getOne",
+		collection: "entities",
+		data: {name: document.getElementById("nameToRemove").value}
+	}, function(data) {
+		console.log("received data from request");
+		playerToRemove = data.result;
+		//use result from getOne to send remove request message
+		send({
+			type: "remove",
+			collection: "entities",
+			data: {
+				id: playerToRemove.id,
+				diagramID: playerToRemove.diagramID
+			}
+		}, function(data){
+			console.log("a player has been removed!");
+		});
+	});
+}
+
+function hideForm(id){
+	document.getElementById(id).style.display="none";
+}
+
+function showForm(id){
+	document.getElementById(id).style.display="block";
+}
+
+function activateOption(id){
+	document.getElementById(id).classList.add("active");
+}
+
+function deactivateOption(id){
+	document.getElementById(id).classList.remove("active");
+}
+
+function addAddPlayerEventListener() {
+	//if add player option is clicked
+	document.getElementById("addPlayerOption").addEventListener("click",
+	function() {
+
+		//set add player option to active so it is highlighted in red
+		activateOption("addPlayerOption");
+		deactivateOption("removePlayerOption");
+
+		//show add player form and hide remove player form
+		showForm("addPlayerForm");
+		hideForm("removePlayerForm");
+
+		//if playerSubmitButton is clicked
+		document.getElementById("playerSubmitButton").addEventListener("click",
+		function(e){
+			e.preventDefault();
+			var col = playerColors[Math.floor(Math.random() * playerColors.length)];
+			createRequestedPlayer(col);
+		});
+	});
+}
+
+function addRemovePlayerEventListener(){
+	//if remove player option is clicked
+	document.getElementById("removePlayerOption").addEventListener("click",
+	function(){
+	
+		//set remove player option to active so it is highlighted in red
+		activateOption("removePlayerOption");
+		deactivateOption("addPlayerOption");
+
+		//show remove player form and hide add player form
+		showForm("removePlayerForm");
+		hideForm("addPlayerForm");
+
+		//if player removeRemoveButton is clicked
+		document.getElementById("playerRemoveButton").addEventListener("click",
+		function(e){
+			e.preventDefault();
+			removeRequestedPlayer();
+		});
+	});
+}
+
+export function addEditEventListeners() {
+	//hide both forms until an option is clicked
+	hideForm("addPlayerForm");
+	hideForm("removePlayerForm");
+	
+	addAddPlayerEventListener();
+	addRemovePlayerEventListener();
+}
+
+
