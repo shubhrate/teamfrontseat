@@ -288,12 +288,13 @@ function exportDiagram(diagram) {
 }
 
 function importDiagram(fileName, diagram){
-	exportDiagram(diagram);
+	//exportDiagram(diagram);
 	send({
 		type: "readFile",
 		fileName: fileName
 	}, function(data){
-		var newEntities = JSON.parse(data);
+		var newEntities = JSON.parse(data.data);
+		/*
 		send({
 			type: "getAll",
 			collection: "entities",
@@ -308,11 +309,14 @@ function importDiagram(fileName, diagram){
 				});
 			}
 		});
+		*/
 		for (var i = 0; i < newEntities.length; i++){
 			send({
 				type: "createInstance",
 				collection: "entities",
 				data: newEntities[i]
+			}, function(data){
+				console.log("new entity imported");
 			});
 		}
 		console.log("your diagram has been uploaded!");
@@ -405,14 +409,17 @@ function addExportDiagramEventListener(diagram){
 }
 
 function addImportDiagramEventListener(diagram){
-	var input = document.createElement("input");
-	input.type = "file";
-	input.onchange = e => {
-		e.preventDefault();
-		var fileName = e["path"]["0"]["files"]["0"].name;
-		importDiagram(fileName, diagram);
-	}
-	input.click();
+	document.getElementById("importDiagramOption").addEventListener("click",
+	function(){
+		var input = document.createElement("input");
+		input.type = "file";
+		input.onchange = e => {
+			e.preventDefault();
+			var fileName = e["path"]["0"]["files"]["0"].name;
+			importDiagram(fileName, diagram);
+		}
+		input.click();
+	});
 }
 
 export function addEditEventListeners(diagram) {
