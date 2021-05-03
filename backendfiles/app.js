@@ -118,7 +118,7 @@ app.ws('/', function (ws, req) {
         };
 
         var collection = collectionMap[msg.collection];
-        if (!(msg.type == "writeToFile")) {
+        if (!(msg.type == "writeToFile") && !(msg.type == "readFile")) {
             if(collection === undefined) {
                 throw new Error("Invalid message collection: " + msg.collection);
             }
@@ -191,22 +191,21 @@ function writeToFile(fileName, entities, ws, requestID) {
         if (err) {
             console.log("error writing file: " + err);
         } else {
+            respondToSocket({written: true}, ws, requestID);
             console.log("successfully wrote to file");
         }
     });
-    respondToSocket({written: true}, ws, requestID);
 }
 
 function readFile(fileName, ws, requestID) {
-    var returnData;
     fs.readFile('./' + fileName, 'utf8', (err, data) => {
         if (err) {
             console.log("error reading file: " + err);
         } else {
-            returnData = data;
+            respondToSocket({data}, ws, requestID);
+            console.log("successfully read file");
         }
     });
-    respondToSocket({returnData}, ws, requestID);
 }
 
 function remove(collection, query, ws, requestID) {
