@@ -11,6 +11,7 @@ const Entity = require('./models/Entity');
 const Diagram = require('./models/Diagram');
 const User = require('./models/User');
 
+const fs = require('fs');
 require('dotenv/config');
 
 mongoose.connect(
@@ -107,6 +108,8 @@ app.ws('/', function (ws, req) {
             getAll,
             update,
             remove,
+            writeToFile,
+            readFile,
             createInstance,
             connectPlayer,
             pauseLiveMotion,
@@ -115,13 +118,22 @@ app.ws('/', function (ws, req) {
         };
 
         var collection = collectionMap[msg.collection];
-        if(collection === undefined) {
-            throw new Error("Invalid message collection: " + msg.collection);
-        }
-
+        if (!(msg.type == "writeToFile")) {
+            if(collection === undefined) {
+                throw new Error("Invalid message collection: " + msg.collection);
+            }
+        } 
+        
         if (requestTypes[msg.type]) {
-            //command string - invokes a function based on command and collection
-            requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
+            if (msg.type == "writeToFile") {
+                writeToFile(msg.fileName, msg.entities, ws, msg.requestID);
+            } else if (msg.type == "readFile") {
+                readFile(msg.fileName, ws, msg.requestID);
+            } else {
+                //command string - invokes a function based on command and collection
+                requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
+            }
+            
         } else {
             throw new Error("Invalid message type");
         }
@@ -172,6 +184,29 @@ function update(collection, query, ws, requestID) {
             }, ws);
         } 
     });
+}
+
+function writeToFile(fileName, entities, ws, requestID) {
+    fs.writeFile('./' + fileName, JSON.stringify(entities), err => {
+        if (err) {
+            console.log("error writing file: " + err);
+        } else {
+            console.log("successfully wrote to file");
+        }
+    });
+    respondToSocket({written: true}, ws, requestID);
+}
+
+function readFile(fileName, ws, requestID) {
+    var returnData;
+    fs.readFile('./' + fileName, 'utf8', (err, data) => {
+        if (err) {
+            console.log("error reading file: " + err);
+        } else {
+            returnData = data;
+        }
+    });
+    respondToSocket({returnData}, ws, requestID);
 }
 
 function remove(collection, query, ws, requestID) {
