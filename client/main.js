@@ -6,6 +6,7 @@ import {address} from "./js/_addr.js";
 document.getElementById("mainBody").onload = function startProgram() {
 	const canvas = document.getElementById("diagram");
 	const diagram = new Diagram("1", canvas);
+	
 	drawDiagram();
 	addResizeEventListener();
 	openClientConnection();
@@ -51,13 +52,13 @@ document.getElementById("mainBody").onload = function startProgram() {
 	
 	function addResizeEventListener(){
 		window.addEventListener("resize", resize);
-	}
+	}	
 	
 	//CONNECT TO SERVER, GET DIAGRAM CONTENTS//////////////////
 	function openClientConnection() {
 		client.open(address, () => {
 			if (document.URL.includes("edit.html")) { //one edit HTML page for all possible edit options
-				client.addEditEventListeners();
+				client.addEditEventListeners(diagram);
 			}
 			client.refreshDiagram(diagram);
 		});

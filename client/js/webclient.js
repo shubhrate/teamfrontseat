@@ -16,6 +16,7 @@ of the app it should be enacted.
 */
 
 import {uniqueID} from "./util.js";
+import {address} from "./_addr.js";
 
 let socket, isOpen = false;
 let diagrams = {};
@@ -64,7 +65,6 @@ const requestTypes = {
 		const diagram = diagrams[data.diagramID];
 		diagram.addUnclassifiedEntity([data]);
 		refreshDiagram(diagram);
-		//location.reload();
 	},
 	/*
 	Remove an entity from the diagram.
@@ -74,7 +74,6 @@ const requestTypes = {
 		const diagram = diagrams[data.diagramID];
 		diagram.removeEntity([data]);
 		refreshDiagram(diagram);
-		//location.reload();
 	}
 }
 
@@ -277,8 +276,53 @@ function removeRequestedPlayer(){
 	});
 }
 
-function hideForm(id){
-	document.getElementById(id).style.display="none";
+function exportDiagram(diagram) {
+	var currentEntities = diagram.exportEntities();
+	send({
+		type: "writeToFile",
+		fileName: document.getElementById("fileName").value,
+		entities: currentEntities
+	}, function(data){
+		console.log("your diagram has been saved!");
+	});
+}
+
+function importDiagram(fileName, diagram){
+	exportDiagram(diagram);
+	send({
+		type: "readFile",
+		fileName: fileName
+	}, function(data){
+		var newEntities = JSON.parse(data);
+		send({
+			type: "getAll",
+			collection: "entities",
+			data: {diagramID: newEntities[0].diagramID}
+		}, function(currentEntities){
+			currentEntities = JSON.parse(currentEntities);
+			for (var i = 0; i < currentEntities.length; i++){
+				send({
+					type: "remove",
+					collection: "entities",
+					data: {id: currentEntities[i].id, diagramID: currentEntities[i].diagramID}
+				});
+			}
+		});
+		for (var i = 0; i < newEntities.length; i++){
+			send({
+				type: "createInstance",
+				collection: "entities",
+				data: newEntities[i]
+			});
+		}
+		console.log("your diagram has been uploaded!");
+	});
+}
+
+function hideForms(forms){
+	for (var i = 0; i < forms.length; i++) {
+		document.getElementById(forms[i]).style.display="none";
+	}
 }
 
 function showForm(id){
@@ -289,8 +333,10 @@ function activateOption(id){
 	document.getElementById(id).classList.add("active");
 }
 
-function deactivateOption(id){
-	document.getElementById(id).classList.remove("active");
+function deactivateOptions(options){
+	for (var i = 0; i < options.length; i++){
+		document.getElementById(options[i]).classList.remove("active");
+	}
 }
 
 function addAddPlayerEventListener() {
@@ -300,11 +346,11 @@ function addAddPlayerEventListener() {
 
 		//set add player option to active so it is highlighted in red
 		activateOption("addPlayerOption");
-		deactivateOption("removePlayerOption");
+		deactivateOptions(["removePlayerOption", "exportDiagramOption"]);
 
 		//show add player form and hide remove player form
 		showForm("addPlayerForm");
-		hideForm("removePlayerForm");
+		hideForms(["removePlayerForm", "exportDiagramForm"]);
 
 		//if playerSubmitButton is clicked
 		document.getElementById("playerSubmitButton").addEventListener("click",
@@ -323,11 +369,11 @@ function addRemovePlayerEventListener(){
 	
 		//set remove player option to active so it is highlighted in red
 		activateOption("removePlayerOption");
-		deactivateOption("addPlayerOption");
+		deactivateOptions(["addPlayerOption", "exportDiagramOption"]);
 
 		//show remove player form and hide add player form
 		showForm("removePlayerForm");
-		hideForm("addPlayerForm");
+		hideForms(["addPlayerForm", "exportDiagramForm"]);
 
 		//if player removeRemoveButton is clicked
 		document.getElementById("playerRemoveButton").addEventListener("click",
@@ -338,13 +384,45 @@ function addRemovePlayerEventListener(){
 	});
 }
 
-export function addEditEventListeners() {
+function addExportDiagramEventListener(diagram){
+	//if export diagram option is clicked
+	document.getElementById("exportDiagramOption").addEventListener("click",
+	function(){
+		
+		//set export diagram option to active so it is highlighted in red
+		activateOption("exportDiagramOption");
+		deactivateOptions(["addPlayerOption", "removePlayerOption"]);
+
+		showForm("exportDiagramForm");
+		hideForms(["addPlayerForm", "removePlayerForm"]);
+
+		document.getElementById("exportDiagramButton").addEventListener("click",
+		function(e) {
+			e.preventDefault();
+			exportDiagram(diagram);
+		})
+	});
+}
+
+function addImportDiagramEventListener(diagram){
+	var input = document.createElement("input");
+	input.type = "file";
+	input.onchange = e => {
+		e.preventDefault();
+		var fileName = e["path"]["0"]["files"]["0"].name;
+		importDiagram(fileName, diagram);
+	}
+	input.click();
+}
+
+export function addEditEventListeners(diagram) {
 	//hide both forms until an option is clicked
-	hideForm("addPlayerForm");
-	hideForm("removePlayerForm");
+	hideForms(["addPlayerForm", "removePlayerForm", "exportDiagramForm"]);
 	
 	addAddPlayerEventListener();
 	addRemovePlayerEventListener();
+	addExportDiagramEventListener(diagram);
+	addImportDiagramEventListener(diagram);
 }
 
 
