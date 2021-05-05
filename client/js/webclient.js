@@ -83,6 +83,9 @@ export function registerDiagram(dg) {
 	diagrams[dg.id] = dg;
 }
 
+/*
+Get all current entities and redraw diagram.
+*/
 export function refreshDiagram(dg) {
 	send({
 		type: "getAll",
@@ -228,6 +231,9 @@ export function queueUpdate(collection, ...objects) {
 	}
 }
 
+///////////////////////////////////////////////////////////
+//FUNCTIONS MANAGING EDIT MENU EVENT LISTENERS
+
 function createRequestedPlayer() {
 	var col = playerColors[Math.floor(Math.random() * playerColors.length)];
 	send({
@@ -295,6 +301,48 @@ function downloadDiagram(diagram){
 	});
 }
 
+function removeEntities(entitiesToRemove) {
+	for (var i = 0; i < entitiesToRemove.length; i++){
+		send({
+			type: "remove",
+			collection: "entities",
+			data: {id: entitiesToRemove[i].id, diagramID: entitiesToRemove[i].diagramID}
+		}, function(data) {
+			console.log("entity removed for import");
+		});
+	}
+}
+
+function createEntities(entitiesToCreate){
+	for (var i = 0; i < entitiesToCreate.length; i++){
+		send({
+			type: "createInstance",
+			collection: "entities",
+			data: entitiesToCreate[i]
+		}, function(data){
+			console.log("new entity imported");
+		});
+	}
+}
+
+function importDiagram(importFile){
+	var file = importFile.files[0];
+	const reader = new FileReader();
+	reader.readAsText(file);
+	reader.onload = function() {
+		var newEntities = JSON.parse(reader.result); 
+		send({
+			type: "getAll",
+			collection: "entities",
+			data: {diagramID: newEntities[0].diagramID}
+		}, function(data){
+			var currentEntities = data.result;
+			removeEntities(currentEntities);
+		});			
+		createEntities(newEntities);	
+	}
+}
+
 function highlightOption(optionToHighlight, optionsToDeactivate){
 	for (var i = 0; i < optionsToDeactivate.length; i++){
 		document.getElementById(optionsToDeactivate[i]).classList.remove("active");
@@ -347,48 +395,6 @@ function addDownloadDiagramEventListener(diagram){
 		downloadDiagram(diagram);
 		console.log("your file has been saved!");
 	});
-}
-
-function removeEntities(entitiesToRemove) {
-	for (var i = 0; i < entitiesToRemove.length; i++){
-		send({
-			type: "remove",
-			collection: "entities",
-			data: {id: entitiesToRemove[i].id, diagramID: entitiesToRemove[i].diagramID}
-		}, function(data) {
-			console.log("entity removed for import");
-		});
-	}
-}
-
-function createEntities(entitiesToCreate){
-	for (var i = 0; i < entitiesToCreate.length; i++){
-		send({
-			type: "createInstance",
-			collection: "entities",
-			data: entitiesToCreate[i]
-		}, function(data){
-			console.log("new entity imported");
-		});
-	}
-}
-
-function importDiagram(importFile){
-	var file = importFile.files[0];
-	const reader = new FileReader();
-	reader.readAsText(file);
-	reader.onload = function() {
-		var newEntities = JSON.parse(reader.result); 
-		send({
-			type: "getAll",
-			collection: "entities",
-			data: {diagramID: newEntities[0].diagramID}
-		}, function(data){
-			var currentEntities = data.result;
-			removeEntities(currentEntities);
-		});			
-		createEntities(newEntities);	
-	}
 }
 
 function addImportDiagramEventListener(){
