@@ -349,7 +349,49 @@ function addDownloadDiagramEventListener(diagram){
 	});
 }
 
-function addImportDiagramEventListener(diagram){
+function removeEntities(entitiesToRemove) {
+	for (var i = 0; i < entitiesToRemove.length; i++){
+		send({
+			type: "remove",
+			collection: "entities",
+			data: {id: entitiesToRemove[i].id, diagramID: entitiesToRemove[i].diagramID}
+		}, function(data) {
+			console.log("entity removed for import");
+		});
+	}
+}
+
+function createEntities(entitiesToCreate){
+	for (var i = 0; i < entitiesToCreate.length; i++){
+		send({
+			type: "createInstance",
+			collection: "entities",
+			data: entitiesToCreate[i]
+		}, function(data){
+			console.log("new entity imported");
+		});
+	}
+}
+
+function importDiagram(importFile){
+	var file = importFile.files[0];
+	const reader = new FileReader();
+	reader.readAsText(file);
+	reader.onload = function() {
+		var newEntities = JSON.parse(reader.result); 
+		send({
+			type: "getAll",
+			collection: "entities",
+			data: {diagramID: newEntities[0].diagramID}
+		}, function(data){
+			var currentEntities = data.result;
+			removeEntities(currentEntities);
+		});			
+		createEntities(newEntities);	
+	}
+}
+
+function addImportDiagramEventListener(){
 	document.getElementById("importDiagramOption").addEventListener("click",
 	function(){
 		highlightOption("importDiagramOption", ["addPlayerOption", "removePlayerOption", "downloadDiagramOption"]);
@@ -361,41 +403,8 @@ function addImportDiagramEventListener(diagram){
 
 		importFile.onchange = e => {
 			e.preventDefault();
-			var file = importFile.files[0];
-			const reader = new FileReader();
-			reader.readAsText(file);
-			reader.onload = function() {
-				var newEntities = JSON.parse(reader.result); 
-				send({
-					type: "getAll",
-					collection: "entities",
-					data: {diagramID: newEntities[0].diagramID}
-				}, function(data){
-					var currentEntities = data.result;
-					console.log(currentEntities);
-					for (var i = 0; i < currentEntities.length; i++){
-						send({
-							type: "remove",
-							collection: "entities",
-							data: {id: currentEntities[i].id, diagramID: currentEntities[i].diagramID}
-						}, function(data) {
-							console.log("entity removed for import");
-						});
-					}
-				});
-				
-				for (var i = 0; i < newEntities.length; i++){
-					send({
-						type: "createInstance",
-						collection: "entities",
-						data: newEntities[i]
-					}, function(data){
-						console.log("new entity imported");
-					});
-				}
-				
-				console.log("your diagram has been uploaded!");
-			};
+			importDiagram(importFile);
+			console.log("your diagram has been uploaded!");
 		}
 		importFile.click();
 	});
