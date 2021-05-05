@@ -11,7 +11,6 @@ const Entity = require('./models/Entity');
 const Diagram = require('./models/Diagram');
 const User = require('./models/User');
 
-const fs = require('fs');
 require('dotenv/config');
 
 mongoose.connect(
@@ -63,7 +62,6 @@ playersMap.set(playerOne.id, playerOne);
 playersMap.set(playerTwo.id, playerTwo);
 
 app.use(function (req, res, next) {
-    //console.log('middleware');
     req.testing = 'testing';
     return next();
 });
@@ -79,10 +77,6 @@ app.ws('/', function (ws, req) {
     mojoClientsMap.set(playerTwo.id, viveClientTwo);
     
     ws.on('message', function(msgStr) {
-        
-        //log message from client
-        //console.log(msgStr);
-
         //returns an object that matching the string
         const msg = JSON.parse(msgStr);
         console.log("Received message from client of type " + msg.type);
@@ -108,8 +102,6 @@ app.ws('/', function (ws, req) {
             getAll,
             update,
             remove,
-            writeToFile,
-            readFile,
             createInstance,
             connectPlayer,
             pauseLiveMotion,
@@ -118,32 +110,23 @@ app.ws('/', function (ws, req) {
         };
 
         var collection = collectionMap[msg.collection];
-        if (!(msg.type == "writeToFile") && !(msg.type == "readFile")) {
+        if (!(msg.type == "readFile")) {
             if(collection === undefined) {
                 throw new Error("Invalid message collection: " + msg.collection);
             }
         } 
         
         if (requestTypes[msg.type]) {
-            if (msg.type == "writeToFile") {
-                writeToFile(msg.fileName, msg.entities, ws, msg.requestID);
-            } else if (msg.type == "readFile") {
-                readFile(msg.fileName, ws, msg.requestID);
-            } else {
-                //command string - invokes a function based on command and collection
-                requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
-            }
-            
+            //command string - invokes a function based on command and collection
+            requestTypes[msg.type](collection, msg.data, ws, msg.requestID);
         } else {
             throw new Error("Invalid message type");
         }
 
     });
-    //console.log('socket', req.testing);
     ws.on('close', (ws) => {
         clients.splice(clients.indexOf(ws), 1);
         console.log("Disconnected from client.");
-        //console.log(ws);
     });
 });
 
@@ -183,28 +166,6 @@ function update(collection, query, ws, requestID) {
                 data: query
             }, ws);
         } 
-    });
-}
-
-function writeToFile(fileName, entities, ws, requestID) {
-    fs.writeFile('./' + fileName, JSON.stringify(entities), err => {
-        if (err) {
-            console.log("error writing file: " + err);
-        } else {
-            respondToSocket({written: true}, ws, requestID);
-            console.log("successfully wrote to file");
-        }
-    });
-}
-
-function readFile(fileName, ws, requestID) {
-    fs.readFile('./' + fileName, 'utf8', (err, data) => {
-        if (err) {
-            console.log("error reading file: " + err);
-        } else {
-            respondToSocket({data}, ws, requestID);
-            console.log("successfully read file");
-        }
     });
 }
 
@@ -314,10 +275,8 @@ function respondToSocket(msg, ws, requestID) {
         msg.requestID = requestID;
     }
     if (ws.readyState == WebSocket.OPEN) {
-        //console.log("Responded to request " + requestID);
         const finalResponse = JSON.stringify(msg);
         ws.send(finalResponse);
-        //console.log("Response sent to client: " + finalResponse);
         console.log("sent a response to client");
     } else {
         console.log("Could not respond to request " + requestID + ". The socket is closed.");
